@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/CodeRunner.iml" filepath="$PROJECT_DIR$/CodeRunner.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/pom.xml.iml" filepath="$PROJECT_DIR$/.idea/pom.xml.iml" />
     </modules>
   </component>
 </project>
