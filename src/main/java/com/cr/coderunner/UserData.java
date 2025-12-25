@@ -29,4 +29,23 @@ public class UserData {
             return codeAttempts.get(codeAttempts.size() - 1);
         }
     }
+
+    //Placeholder for future code running command
+    public String runLatest() {
+        //Get the last submission to be ran, notify user if impossible
+        CodeSubmission current = getLastSubmission();
+        if (current == null) {
+            return "ERROR: No submission to be ran";
+        }
+
+        //TODO: Write submission running code
+        current.buildAndRun();
+
+        //Return message based on operation success
+        if (current.success) {
+            return "Succeeded!";
+        } else {
+            return "Failure :(";
+        }
+    }
 }

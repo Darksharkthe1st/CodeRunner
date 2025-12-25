@@ -9,7 +9,7 @@ public class IDEController {
 
     @GetMapping("/")
     public String index() {
-        return "Welcome to CodeRunner! Go to Route /submit to upload code.";
+        return "Welcome to CodeRunner! Go to Route /submit to upload code and /check to view it.";
     }
 
     //Using simple field injection to create bean, autowired
@@ -27,6 +27,11 @@ public class IDEController {
     public void postSubmission(@RequestBody CodeSubmission codeSubmission) {
         userData.addAttempt(codeSubmission);
         System.out.println("Did that " + codeSubmission.code);
+    }
+
+    @GetMapping("/run")
+    public String runSubmission() {
+        return userData.runLatest();
     }
     
 }
