@@ -19,4 +19,14 @@ public class UserData {
         codeAttempts.add(code);
         return ++attempts;
     }
+
+    //Returns the last element of the codeSubmissions array
+    public CodeSubmission getLastSubmission() {
+        //Only return a submission if it exists
+        if (codeAttempts == null || codeAttempts.size() <= 0) {
+            return null;
+        } else {
+            return codeAttempts.get(codeAttempts.size() - 1);
+        }
+    }
 }
