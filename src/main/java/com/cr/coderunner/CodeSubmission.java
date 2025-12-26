@@ -1,7 +1,8 @@
 package com.cr.coderunner;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.InputMismatchException;
@@ -34,7 +35,7 @@ public class CodeSubmission {
         }
     }
 
-    public void buildAndRun() throws IOException, InterruptedException {
+    public String buildAndRun() throws IOException, InterruptedException {
 
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
@@ -79,40 +80,74 @@ public class CodeSubmission {
         int count = 0;
 
         //Run the process, wait until complete
-        Process process = p.start();
-        while (process.isAlive() && count/10 < TIME_LIMIT_SECS) {
-            Thread.sleep(100);
-            count++;
-        }
+        String status = runProcess(p.start());
 
-        //Time limit exceeded
-        if (count/10 >= TIME_LIMIT_SECS) {
-            process.destroyForcibly();
-            this.latestOutput = "Time Limit Exceeded.";
-            this.success = false;
-            return;
-        }
         //TODO: use Docker to ensure dev env has all needed build tools
 
         //TODO: funnel ProcessBuilder outputs into a variable somehow
 
         //TODO: Add evaluation of code outputs by checking variable equality (start with ints)
         System.out.println("Here is the output: ");
-        List<String> fileLines = Files.readAllLines(outputFile.toPath());
+        //Print out latest output for now for testing purposes
+        System.out.println(this.latestOutput);
 
-        //Use string builder to convert output list of strings into readable format
-        StringBuilder fullOutput = new StringBuilder("");
-        for (String line : fileLines) {
-            fullOutput.append(line);
-            fullOutput.append("\n");
+        //Set success to true/false depending on status
+        this.success = status.equals("Success");
+
+        return status;
+    }
+
+    /** Runs protected process with Time and Output Limits. Returns status depending on if those limits are hit
+     * @param process Process to be ran
+     * @return "success" for completion, "Time Limit Exceeded" for surpassing CodeSubmission.TIME_LIMIT_SECS, "Output Limit Exceeded" for surpassing max String size in output
+     * @throws IOException if program output cannot be accessed
+     * @throws InterruptedException for thread.sleep calls on the main process (Spring Boot server)
+     */
+    public String runProcess(Process process) throws IOException, InterruptedException {
+        //Use BufferedReader/StringBuilder to store outputs
+        InputStream outputStream = process.getInputStream();
+        InputStreamReader outputReader = new InputStreamReader(outputStream, StandardCharsets.UTF_8);
+        BufferedReader outputBuffer = new BufferedReader(outputReader);
+        StringBuilder outputs = new StringBuilder("");
+
+        String status = "success";
+        int count = 0;
+
+        //Run the process until time's up
+        while (process.isAlive() && count/10 < TIME_LIMIT_SECS) {
+            Thread.sleep(100);
+            count++;
         }
 
-        //Print out full output for now for testing purposes
-        System.out.println(fullOutput);
+        //Get the output of the code
+        while (true) {
+            try {
+                String line = outputBuffer.readLine();
+                if (line != null) {
+                    outputs.append(outputBuffer.readLine());
+                    outputs.append("\n");
+                }
+            } catch (OutOfMemoryError e) {
+                status = "Output Limit Exceeded";
+                break;
+            }
+        }
 
-        this.latestOutput = fullOutput.toString();
+        //Time limit exceeded
+        if (count/10 >= TIME_LIMIT_SECS) {
+            process.destroyForcibly();
+            status = "Time Limit Exceeded.";
+        }
 
-        //Set success to true by default for now
-        this.success = true;
+        //Show the user the error message if it comes up
+        if (!status.equals("success")) {
+            outputs.append("\n====");
+            outputs.append(status);
+        }
+
+        //Save the final output
+        this.latestOutput = outputs.toString();
+
+        return status;
     }
 }
