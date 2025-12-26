@@ -12,6 +12,9 @@ public class CodeSubmission {
     public String language;
     public boolean success;
     public double runtime;
+    public String latestOutput;
+
+    public static final int TIME_LIMIT_SECS = 10;
 
     //TODO: Add string to represent code language
 
@@ -20,6 +23,7 @@ public class CodeSubmission {
         this.language = language;
         this.success = false;
         this.runtime = -1;
+        this.latestOutput = null;
     }
 
     public String getExtensionByLang(String language) {
@@ -72,10 +76,21 @@ public class CodeSubmission {
             p.command("java", codeFile.getAbsolutePath());
         }
 
+        int count = 0;
+
         //Run the process, wait until complete
         Process process = p.start();
-        while (process.isAlive()) {
+        while (process.isAlive() && count/10 < TIME_LIMIT_SECS) {
             Thread.sleep(100);
+            count++;
+        }
+
+        //Time limit exceeded
+        if (count/10 >= TIME_LIMIT_SECS) {
+            process.destroyForcibly();
+            this.latestOutput = "Time Limit Exceeded.";
+            this.success = false;
+            return;
         }
         //TODO: use Docker to ensure dev env has all needed build tools
 
@@ -94,6 +109,8 @@ public class CodeSubmission {
 
         //Print out full output for now for testing purposes
         System.out.println(fullOutput);
+
+        this.latestOutput = fullOutput.toString();
 
         //Set success to true by default for now
         this.success = true;

@@ -5,6 +5,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 public class IDEController {
@@ -32,8 +33,12 @@ public class IDEController {
     }
 
     @GetMapping("/run")
-    public String runSubmission() throws IOException, InterruptedException {
-        return userData.runLatest();
+    public Map runSubmission() throws IOException, InterruptedException {
+        String status = userData.runLatest();
+        return Map.of(
+                "result", status,
+                "output", userData.getLastSubmission().latestOutput
+        );
     }
     
 }
