@@ -1,5 +1,6 @@
 package com.cr.coderunner;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class UserData {
@@ -31,7 +32,7 @@ public class UserData {
     }
 
     //Placeholder for future code running command
-    public String runLatest() {
+    public String runLatest() throws IOException, InterruptedException {
         //Get the last submission to be ran, notify user if impossible
         CodeSubmission current = getLastSubmission();
         if (current == null) {

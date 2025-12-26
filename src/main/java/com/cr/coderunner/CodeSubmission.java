@@ -30,11 +30,11 @@ public class CodeSubmission {
         }
     }
 
-    public void buildAndRun() throws IOException {
+    public void buildAndRun() throws IOException, InterruptedException {
 
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
-        File execDir = new File(userDir, ".test");
+        File execDir = new File(userDir, "test");
 
         //Check if the extension is valid and save it
         String extension = getExtensionByLang(this.language);
@@ -72,6 +72,11 @@ public class CodeSubmission {
             p.command("java", codeFile.getAbsolutePath());
         }
 
+        //Run the process, wait until complete
+        Process process = p.start();
+        while (process.isAlive()) {
+            Thread.sleep(100);
+        }
         //TODO: use Docker to ensure dev env has all needed build tools
 
         //TODO: funnel ProcessBuilder outputs into a variable somehow

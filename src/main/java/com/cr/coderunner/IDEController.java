@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
 public class IDEController {
 
@@ -30,7 +32,7 @@ public class IDEController {
     }
 
     @GetMapping("/run")
-    public String runSubmission() {
+    public String runSubmission() throws IOException, InterruptedException {
         return userData.runLatest();
     }
     
