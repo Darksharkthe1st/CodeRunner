@@ -92,7 +92,7 @@ public class CodeSubmission {
         System.out.println(this.latestOutput);
 
         //Set success to true/false depending on status
-        this.success = status.equals("Success");
+        this.success = status.equals("success");
 
         return status;
     }
@@ -115,17 +115,21 @@ public class CodeSubmission {
 
         //Run the process until time's up
         while (process.isAlive() && count/10 < TIME_LIMIT_SECS) {
+            System.out.println("Running " + count);
             Thread.sleep(100);
             count++;
         }
 
         //Get the output of the code
         while (true) {
+            System.out.println("Reading " + (count++));
             try {
                 String line = outputBuffer.readLine();
                 if (line != null) {
                     outputs.append(outputBuffer.readLine());
                     outputs.append("\n");
+                } else {
+                    break;
                 }
             } catch (OutOfMemoryError e) {
                 status = "Output Limit Exceeded";

@@ -31,7 +31,7 @@ public class UserData {
         }
     }
 
-    //Placeholder for future code running command
+
     public String runLatest() throws IOException, InterruptedException {
         //Get the last submission to be ran, notify user if impossible
         CodeSubmission current = getLastSubmission();
@@ -39,14 +39,6 @@ public class UserData {
             return "ERROR: No submission to be ran";
         }
 
-        //TODO: Write submission running code
-        current.buildAndRun();
-
-        //Return message based on operation success
-        if (current.success) {
-            return "Succeeded!";
-        } else {
-            return "Failure :(";
-        }
+        return current.buildAndRun();
     }
 }
