@@ -66,6 +66,7 @@ public class CodeSubmission {
         if (!outputFile.createNewFile()) {
             System.out.println("Output file already exists; overwriting.");
         }
+        //TODO: Bug fix needed--overwrites file, but does not remove prior text. Find a way to empty before writing
 
         //Prepare ProcessBuilder to run code file accordingly (e.g. java xxx.java)
         ProcessBuilder p = new ProcessBuilder();
@@ -120,6 +121,9 @@ public class CodeSubmission {
             count++;
         }
 
+        //TODO: Fix bug where output is now coming out empty (new bug, wasn't happening earlier)
+        //TODO: Add checkers for if program exited with error, read the error buffer in that case.
+
         //Get the output of the code
         while (true) {
             System.out.println("Reading " + (count++));
@@ -137,9 +141,11 @@ public class CodeSubmission {
             }
         }
 
+        //Kill the process no matter what to avoid any rogue processes
+        process.destroyForcibly();
+
         //Time limit exceeded
         if (count/10 >= TIME_LIMIT_SECS) {
-            process.destroyForcibly();
             status = "Time Limit Exceeded.";
         }
 
