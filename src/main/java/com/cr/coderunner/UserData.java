@@ -24,21 +24,20 @@ public class UserData {
     //Returns the last element of the codeSubmissions array
     public CodeSubmission getLastSubmission() {
         //Only return a submission if it exists
-        if (codeAttempts == null || codeAttempts.size() <= 0) {
+        if (codeAttempts == null || codeAttempts.isEmpty()) {
             return null;
         } else {
-            return codeAttempts.get(codeAttempts.size() - 1);
+            return codeAttempts.getLast();
         }
     }
 
-
-    public String runLatest() throws IOException, InterruptedException {
+    public String runLatest(String input) throws IOException, InterruptedException {
         //Get the last submission to be ran, notify user if impossible
         CodeSubmission current = getLastSubmission();
         if (current == null) {
             return "ERROR: No submission to be ran";
         }
 
-        return current.buildAndRun();
+        return current.buildAndRun(input);
     }
 }

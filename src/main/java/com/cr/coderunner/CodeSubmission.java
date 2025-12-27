@@ -10,35 +10,33 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CodeSubmission {
-    public String code;
-    public String language;
+    public static final int TIME_LIMIT_SECS = 10;
+
+    public final String code;
+    public final String language;
+    public final String input;
     public boolean success;
     public double runtime;
     public String latestOutput;
     public String latestError;
 
-    public static final int TIME_LIMIT_SECS = 10;
-
-    //TODO: Add string to represent code language
-
-    public CodeSubmission(String code, String language) {
+    public CodeSubmission(String code, String language, String input) {
         this.code = code;
         this.language = language;
+        this.input = input;
         this.success = false;
         this.runtime = -1;
         this.latestOutput = null;
     }
 
     public String getExtensionByLang(String language) {
-        if (language.equals("Java")) {
-            return ".java";
-        } else {
-            return "none found";
-        }
-    }
-
-    public String buildAndRun() throws IOException, InterruptedException {
-        return buildAndRun("");
+        return switch (language) {
+            case "Java" -> ".java";
+            case "Python" -> ".py";
+            case "C" -> ".c";
+            case "CPP" -> ".cpp";
+            default -> null;
+        };
     }
 
     public String buildAndRun(String inputs) throws IOException, InterruptedException {
@@ -49,9 +47,8 @@ public class CodeSubmission {
 
         //Check if the extension is valid and save it
         String extension = getExtensionByLang(this.language);
-        if (extension.equals("none found")) {
+        if (extension == null)
             throw new InputMismatchException(this.language + " is not a supported language in CodeRunner.");
-        }
 
         //Make a new directory if needed
         if (execDir.mkdir()) {
@@ -74,8 +71,6 @@ public class CodeSubmission {
         Files.writeString(codeFile.toPath(),this.code, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         Files.writeString(inputFile.toPath(), inputs, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-        //TODO: Bug fix needed--overwrites file, but does not remove prior text. Find a way to empty before writing
-
         //Prepare ProcessBuilder to run code file accordingly (e.g. java xxx.java)
         ProcessBuilder p = new ProcessBuilder();
         p.redirectInput(inputFile);
@@ -91,8 +86,6 @@ public class CodeSubmission {
 
         //TODO: use Docker to ensure dev env has all needed build tools
 
-        //TODO: funnel ProcessBuilder outputs into a variable somehow
-
         //TODO: Add evaluation of code outputs by checking variable equality (start with ints)
 
         //Print out latest output for now for testing purposes
@@ -107,7 +100,7 @@ public class CodeSubmission {
     }
 
     /** Runs protected process with Time and Output Limits. Returns status depending on if those limits are hit
-     * @param process Process to be ran
+     * @param process Process to be run
      * @return "success" for completion, "Time Limit Exceeded" for surpassing CodeSubmission.TIME_LIMIT_SECS, "Output Limit Exceeded" for surpassing max String size in output
      * @throws IOException if program output cannot be accessed
      * @throws InterruptedException for thread.sleep calls on the main process (Spring Boot server)
@@ -120,9 +113,8 @@ public class CodeSubmission {
         StringBuilder errors = new StringBuilder();
 
         latestError = "success";
-        int count = 0;
 
-        //Thread to read out the buffer values
+        //Thread to read out the buffer values for output
         Thread readOut = new Thread() {
             public void run() {
                 String outLine = "";
@@ -140,6 +132,7 @@ public class CodeSubmission {
             }
         };
 
+        //Thread to read out the buffer values for input
         Thread readErr = new Thread() {
             public void run() {
                 String errLine = "";
@@ -169,8 +162,6 @@ public class CodeSubmission {
             latestError = "Time Limit Exceeded.";
         }
 
-        //TODO: Add checkers for if program exited with error, read the error buffer in that case.
-
         try {
             //Kill the process no matter what to avoid any rogue processes
             process.destroy();
@@ -184,13 +175,15 @@ public class CodeSubmission {
             latestError = "Program exited with incorrect return value: " + process.exitValue();
         }
 
-        //Stop reading input/error data
+        //Stop reading input/error data, close buffers
         readOut.join();
         readErr.join();
         outputBuffer.close();
         errorBuffer.close();
 
+        //Store the error/success values to status
         String status = latestError;
+
         //Show the user the error message if it comes up
         if (!status.equals("success")) {
             outputs.append("\n====");
