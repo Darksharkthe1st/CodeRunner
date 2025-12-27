@@ -40,6 +40,7 @@ public class CodeSubmission {
     }
 
     public String buildAndRun(String inputs) throws IOException, InterruptedException {
+        inputs = input; //TODO: Switch to different format for storing inputs (this line is temporary)
 
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));

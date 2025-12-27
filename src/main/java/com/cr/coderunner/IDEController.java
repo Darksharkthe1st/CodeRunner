@@ -34,7 +34,7 @@ public class IDEController {
 
     @GetMapping("/run")
     public Map runSubmission() throws IOException, InterruptedException {
-        String status = userData.runLatest();
+        String status = userData.runLatest(""); //TODO: Change to store input separately somehow
         return Map.of(
                 "result", status,
                 "output", userData.getLastSubmission().latestOutput,
