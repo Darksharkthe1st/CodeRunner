@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class CodeSubmission {
     public String code;
@@ -14,6 +15,7 @@ public class CodeSubmission {
     public boolean success;
     public double runtime;
     public String latestOutput;
+    public String latestError;
 
     public static final int TIME_LIMIT_SECS = 10;
 
@@ -39,7 +41,7 @@ public class CodeSubmission {
 
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
-        File execDir = new File(userDir, "test");
+        File execDir = new File(userDir, ".test");
 
         //Check if the extension is valid and save it
         String extension = getExtensionByLang(this.language);
@@ -61,25 +63,16 @@ public class CodeSubmission {
         //Overwrite existing text file
         Files.writeString(codeFile.toPath(),this.code, StandardOpenOption.WRITE);
 
-        //Create an output file for the code to write into
-        File outputFile = new File(execDir, "output.txt");
-        if (!outputFile.createNewFile()) {
-            System.out.println("Output file already exists; overwriting.");
-        }
         //TODO: Bug fix needed--overwrites file, but does not remove prior text. Find a way to empty before writing
 
         //Prepare ProcessBuilder to run code file accordingly (e.g. java xxx.java)
         ProcessBuilder p = new ProcessBuilder();
         p.directory(execDir);
-        p.redirectOutput(outputFile);
 
         //Use different execution methods for different languages
         if (language.equals("Java")) {
             p.command("java", codeFile.getAbsolutePath());
         }
-
-        int count = 0;
-
         //Run the process, wait until complete
         String status = runProcess(p.start());
 
@@ -88,9 +81,11 @@ public class CodeSubmission {
         //TODO: funnel ProcessBuilder outputs into a variable somehow
 
         //TODO: Add evaluation of code outputs by checking variable equality (start with ints)
-        System.out.println("Here is the output: ");
+
         //Print out latest output for now for testing purposes
-        System.out.println(this.latestOutput);
+        System.out.println("OUT:\n" + this.latestOutput);
+        //Print out latest error for testing purposes
+        System.out.println("ERR:\n" + this.latestError);
 
         //Set success to true/false depending on status
         this.success = status.equals("success");
@@ -106,49 +101,69 @@ public class CodeSubmission {
      */
     public String runProcess(Process process) throws IOException, InterruptedException {
         //Use BufferedReader/StringBuilder to store outputs
-        InputStream outputStream = process.getInputStream();
-        InputStreamReader outputReader = new InputStreamReader(outputStream, StandardCharsets.UTF_8);
-        BufferedReader outputBuffer = new BufferedReader(outputReader);
-        StringBuilder outputs = new StringBuilder("");
+        BufferedReader errorBuffer = process.errorReader();
+        BufferedReader outputBuffer = process.inputReader();
+        StringBuilder outputs = new StringBuilder();
+        StringBuilder errors = new StringBuilder();
 
-        String status = "success";
+        latestError = "success";
         int count = 0;
 
-        //Run the process until time's up
-        while (process.isAlive() && count/10 < TIME_LIMIT_SECS) {
-            System.out.println("Running " + count);
-            Thread.sleep(100);
-            count++;
-        }
-
-        //TODO: Fix bug where output is now coming out empty (new bug, wasn't happening earlier)
-        //TODO: Add checkers for if program exited with error, read the error buffer in that case.
-
-        //Get the output of the code
-        while (true) {
-            System.out.println("Reading " + (count++));
-            try {
-                String line = outputBuffer.readLine();
-                if (line != null) {
-                    outputs.append(outputBuffer.readLine());
-                    outputs.append("\n");
-                } else {
-                    break;
+        //Thread to read out the buffer values
+        Thread readBuf = new Thread() {
+            public void run() {
+                while (true) {
+                    try {
+                        String outLine = outputBuffer.readLine();
+                        String errLine = errorBuffer.readLine();
+                        if (outLine != null) {
+                            outputs.append(outLine); outputs.append("\n");
+                        }
+                        if (errLine != null) {
+                            outputs.append(errLine); outputs.append("\n");
+                        }
+                    } catch (OutOfMemoryError | IOException e) {
+                        latestError = "Output Limit Exceeded";
+                        break;
+                    }
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
                 }
-            } catch (OutOfMemoryError e) {
-                status = "Output Limit Exceeded";
-                break;
             }
-        }
+        };
 
-        //Kill the process no matter what to avoid any rogue processes
-        process.destroyForcibly();
+        //Begin reading stdout
+        readBuf.start();
+
+        //wait for the process to finish
+        process.waitFor(TIME_LIMIT_SECS, TimeUnit.SECONDS);
 
         //Time limit exceeded
-        if (count/10 >= TIME_LIMIT_SECS) {
-            status = "Time Limit Exceeded.";
+        if (process.isAlive()) {
+            latestError = "Time Limit Exceeded.";
         }
 
+        //TODO: Add checkers for if program exited with error, read the error buffer in that case.
+
+        try {
+            //Kill the process no matter what to avoid any rogue processes
+            process.destroy();
+        } catch (IllegalThreadStateException e) {
+            //If the process cannot be destroyed normally, forcibly kill it
+            process.destroyForcibly();
+        }
+
+        //If the process exited improperly and an error wasn't caught, note it
+        if (process.exitValue() != 0 && latestError.equals("success")) {
+            latestError = "Program exited with incorrect return value: " + process.exitValue();
+        }
+
+        readBuf.interrupt();
+
+        String status = latestError;
         //Show the user the error message if it comes up
         if (!status.equals("success")) {
             outputs.append("\n====");
@@ -157,6 +172,7 @@ public class CodeSubmission {
 
         //Save the final output
         this.latestOutput = outputs.toString();
+        this.latestError = errors.toString();
 
         return status;
     }

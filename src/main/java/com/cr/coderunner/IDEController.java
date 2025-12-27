@@ -37,7 +37,8 @@ public class IDEController {
         String status = userData.runLatest();
         return Map.of(
                 "result", status,
-                "output", userData.getLastSubmission().latestOutput
+                "output", userData.getLastSubmission().latestOutput,
+                "error", userData.getLastSubmission().latestError
         );
     }
     
