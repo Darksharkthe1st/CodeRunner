@@ -38,6 +38,10 @@ public class CodeSubmission {
     }
 
     public String buildAndRun() throws IOException, InterruptedException {
+        return buildAndRun("");
+    }
+
+    public String buildAndRun(String inputs) throws IOException, InterruptedException {
 
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
@@ -60,19 +64,28 @@ public class CodeSubmission {
             System.out.println("Code file already exists; overwriting.");
         }
 
-        //Overwrite existing text file
-        Files.writeString(codeFile.toPath(),this.code, StandardOpenOption.WRITE);
+        //Create a temporary input file with an appropriate filename
+        File inputFile = new File(execDir, "input.txt");
+        if (!inputFile.createNewFile()) {
+            System.out.println("Input file already exists; overwriting.");
+        }
+
+        //Overwrite existing text files
+        Files.writeString(codeFile.toPath(),this.code, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(inputFile.toPath(), inputs, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
         //TODO: Bug fix needed--overwrites file, but does not remove prior text. Find a way to empty before writing
 
         //Prepare ProcessBuilder to run code file accordingly (e.g. java xxx.java)
         ProcessBuilder p = new ProcessBuilder();
+        p.redirectInput(inputFile);
         p.directory(execDir);
 
         //Use different execution methods for different languages
         if (language.equals("Java")) {
             p.command("java", codeFile.getAbsolutePath());
         }
+
         //Run the process, wait until complete
         String status = runProcess(p.start());
 
@@ -110,25 +123,34 @@ public class CodeSubmission {
         int count = 0;
 
         //Thread to read out the buffer values
-        Thread readBuf = new Thread() {
+        Thread readOut = new Thread() {
             public void run() {
-                while (true) {
+                String outLine = "";
+                while (outLine != null) {
                     try {
-                        String outLine = outputBuffer.readLine();
-                        String errLine = errorBuffer.readLine();
+                        outLine = outputBuffer.readLine();
                         if (outLine != null) {
                             outputs.append(outLine); outputs.append("\n");
-                        }
-                        if (errLine != null) {
-                            outputs.append(errLine); outputs.append("\n");
                         }
                     } catch (OutOfMemoryError | IOException e) {
                         latestError = "Output Limit Exceeded";
                         break;
                     }
+                }
+            }
+        };
+
+        Thread readErr = new Thread() {
+            public void run() {
+                String errLine = "";
+                while (errLine != null) {
                     try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
+                        errLine = errorBuffer.readLine();
+                        if (errLine != null) {
+                            errors.append(errLine); errors.append("\n");
+                        }
+                    } catch (OutOfMemoryError | IOException e) {
+                        latestError = "Error Limit Exceeded";
                         break;
                     }
                 }
@@ -136,7 +158,8 @@ public class CodeSubmission {
         };
 
         //Begin reading stdout
-        readBuf.start();
+        readOut.start();
+        readErr.start();
 
         //wait for the process to finish
         process.waitFor(TIME_LIMIT_SECS, TimeUnit.SECONDS);
@@ -161,7 +184,11 @@ public class CodeSubmission {
             latestError = "Program exited with incorrect return value: " + process.exitValue();
         }
 
-        readBuf.interrupt();
+        //Stop reading input/error data
+        readOut.join();
+        readErr.join();
+        outputBuffer.close();
+        errorBuffer.close();
 
         String status = latestError;
         //Show the user the error message if it comes up
