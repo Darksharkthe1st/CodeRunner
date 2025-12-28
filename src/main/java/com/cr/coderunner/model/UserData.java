@@ -1,17 +1,20 @@
 package com.cr.coderunner.model;
 
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
+@Component
 public class UserData {
-    public String username;
+    public final String username;
     public int attempts;
     public ArrayList<CodeSubmission> codeAttempts;
     public HashMap<String, Problem> problems;
 
     //Constructor for user; Have user start off with no code attempted
-    public UserData(String username) {
-        this.username = username;
+    public UserData() {
+        this.username = "username";
         this.attempts = 0;
         this.codeAttempts = new ArrayList<CodeSubmission>();
         problems = new HashMap<String, Problem>();

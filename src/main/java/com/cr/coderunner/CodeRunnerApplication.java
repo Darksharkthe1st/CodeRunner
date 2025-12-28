@@ -1,4 +1,4 @@
-package com.cr.coderunner.service;
+package com.cr.coderunner;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

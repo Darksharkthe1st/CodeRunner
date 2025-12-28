@@ -1,6 +1,10 @@
 package com.cr.coderunner.dto;
 
 import com.cr.coderunner.model.CodeExecution;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 //TODO: Move to its own file when used by more than one function
 public class RunResult {
@@ -10,11 +14,32 @@ public class RunResult {
     public String error;
     public String exitStatus;
 
+    @JsonCreator
+    public RunResult(@JsonProperty("success") boolean success, @JsonProperty("runtime") double runtime, @JsonProperty("output") String output, @JsonProperty("error") String error, @JsonProperty("exitStatus") String exitStatus) {
+        this.success = success;
+        this.runtime = runtime;
+        this.output = output;
+        this.error = error;
+        this.exitStatus = exitStatus;
+    }
+
     public RunResult(CodeExecution execution) {
         this.success = execution.success;
         this.runtime = execution.runtime;
         this.output = execution.output;
         this.error = execution.error;
         this.exitStatus = execution.exitStatus;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        RunResult runResult = (RunResult) o;
+        return success == runResult.success && Integer.compare((int)runtime, (int)runResult.runtime) == 0 && Objects.equals(output, runResult.output) && Objects.equals(error, runResult.error) && Objects.equals(exitStatus, runResult.exitStatus);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(success, (int)runtime, output, error, exitStatus);
     }
 }
