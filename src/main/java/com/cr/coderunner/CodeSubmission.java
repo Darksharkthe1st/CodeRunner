@@ -1,5 +1,8 @@
 package com.cr.coderunner;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -7,19 +10,26 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class CodeSubmission {
     public static final int TIME_LIMIT_SECS = 10;
+    //Shared object used for locking all build operations (so files aren't misread)
+    public static final Object buildLock = new Object();
 
     public final String code;
     public final String language;
-    public final String input;
+    public final String problemName;
 
-    public CodeSubmission(String code, String language, String input) {
+    @JsonCreator
+    public CodeSubmission(@JsonProperty(value = "code", required = true) String code, @JsonProperty(value = "language", required = true) String language, @JsonProperty(value = "problem", required = true) String problemName) {
+        if (code == null || language == null || problemName == null) {
+            throw new IllegalArgumentException("NULL Parameters. Required fields: 'code', 'language', 'input', 'problem'.");
+        }
         this.code = code;
         this.language = language;
-        this.input = input;
+        this.problemName = problemName;
     }
 
     public String getExtensionByLang(String language) {
@@ -32,19 +42,7 @@ public class CodeSubmission {
         };
     }
 
-    public void run() {
-        run(new CodeExecution(
-                this,
-                this.input
-        ));
-    }
-
-    public void run(CodeExecution exec) {
-        //TODO: Remove in the future; temporary
-        if (exec.input == null) {
-            exec.input = this.input;
-        }
-
+    public void build(ProcessBuilder p, CodeExecution exec) {
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
         File execDir = new File(userDir, ".test");
@@ -81,36 +79,62 @@ public class CodeSubmission {
 
             //Catch exception if files cannot be written to
         } catch (IOException e) {
-            exec.success = false;
-            exec.runtime = -1;
-            exec.output = "";
-            exec.error = "";
-            exec.exitStatus = "could not write to code file.";
+            exec.exitStatus += "could not write to code file.";
             return;
         }
 
-        //Prepare ProcessBuilder to run code file accordingly (e.g. java xxx.java)
-        ProcessBuilder p = new ProcessBuilder();
         p.redirectInput(inputFile);
         p.directory(execDir);
+    }
 
-        //Use different execution methods for different languages
-        if (language.equals("Java")) {
-            p.command("java", codeFile.getAbsolutePath());
+    /** runs the code provided, w/ input from exec and outputting into exec
+     * @param exec contains input text and will be filled with status, output, runtime information and more.
+     */
+    public void run(CodeExecution exec) {
+        //Prepare ProcessBuilder to run code file accordingly (e.g. java xxx.java)
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        Process process;
+
+        //Assume the worst:
+        exec.success = false;
+        exec.runtime = 0;
+        exec.output = "";
+        exec.error = "";
+        exec.exitStatus = "";
+
+        synchronized (buildLock) {
+            //Build code (AKA write data to files);
+            build(processBuilder, exec);
+
+            //If build failed, stop running
+            if (!exec.success) {
+                return;
+            }
+
+            //Use different execution methods for different languages
+            if (language.equals("Java")) {
+                processBuilder.command("java", codeFile.getAbsolutePath());
+            }
+
+            //Try to start the process
+            try {
+                process = processBuilder.start();
+            } catch (IOException e) {
+                exec.exitStatus += "could not start program.";
+                return;
+            }
         }
 
         //Run the process, wait until complete
-        String status = null;
         try {
-            runProcess(p.start(), exec);
+            runProcess(process, exec);
 
             //Catch internal errors in runProcess code in case any buffers fail at closing/threads can't join
         } catch (IOException | InterruptedException e) {
-            exec.success = false;
-            exec.runtime = 0;
-            exec.output = "";
-            exec.error = "";
             exec.exitStatus += "could not read stdout/stderr.";
+            return;
+        } catch (RuntimeException e) {
+            //Assume that the exitStatus was already changed.
             return;
         }
 
@@ -131,7 +155,7 @@ public class CodeSubmission {
      * @throws IOException if program output cannot be accessed
      * @throws InterruptedException for thread.sleep calls on the main process (Spring Boot server)
      */
-    public void runProcess(Process process, CodeExecution exec) throws InterruptedException, IOException {
+    public void runProcess(Process process, CodeExecution exec) throws Exception {
         //Use BufferedReader/StringBuilder to store outputs
         BufferedReader errorBuffer = process.errorReader();
         BufferedReader outputBuffer = process.inputReader();
@@ -217,6 +241,7 @@ public class CodeSubmission {
         if (!exec.exitStatus.isEmpty()) {
             outputs.append("\n====ERROR(S):");
             outputs.append(exec.exitStatus);
+            throw new RuntimeException("Failure: " + exec.exitStatus);
         }
 
         //Save the final output

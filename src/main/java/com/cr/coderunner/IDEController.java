@@ -1,5 +1,6 @@
 package com.cr.coderunner;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -31,19 +32,32 @@ public class IDEController {
         userData.addAttempt(codeSubmission);
     }
 
-    @GetMapping("/run")
-    public Map runSubmission() throws IOException, InterruptedException {
+    //TODO: Move to its own file when used by more than one function
+    public static class RunResult {
+        public boolean success;
+        public double runtime;
+        public String output;
+        public String error;
+        public String exitStatus;
+
+        public RunResult(CodeExecution execution) {
+            this.success = execution.success;
+            this.runtime = execution.runtime;
+            this.output = execution.output;
+            this.error = execution.error;
+            this.exitStatus = execution.exitStatus;
+        }
+    }
+
+    @PostMapping("/run")
+    public RunResult runSubmission(@JsonProperty("input") String input) throws IOException, InterruptedException {
         CodeSubmission latestSubmission = userData.getLastSubmission();
-        CodeExecution execution = new CodeExecution(latestSubmission, latestSubmission.input);
+        CodeExecution execution = new CodeExecution(latestSubmission, input);
 
         execution.start();
         execution.join();
 
-        return Map.of(
-                "result", execution.exitStatus,
-                "output", execution.output,
-                "error", execution.error
-        );
+        return new RunResult(execution);
     }
     
 }

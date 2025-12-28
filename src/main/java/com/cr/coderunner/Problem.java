@@ -1,14 +1,17 @@
 package com.cr.coderunner;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.IOException;
 
 public class Problem {
     public static class TestCase {
         public String input;
         public String output;
-
-        public TestCase(String output, String input) {
+        @JsonCreator
+        public TestCase(@JsonProperty("output") String output, @JsonProperty("input") String input) {
             this.output = output;
             this.input = input;
         }
@@ -16,6 +19,14 @@ public class Problem {
 
     public TestCase[] testCases;
     public String description;
+    public String name;
+
+    @JsonCreator
+    public Problem(@JsonProperty("test cases") TestCase[] testCases, @JsonProperty("description") String description, @JsonProperty("name") String name) {
+        this.testCases = testCases;
+        this.description = description;
+        this.name = name;
+    }
 
     public CodeExecution[] runCases(CodeSubmission codeSubmission) throws IOException, InterruptedException {
         CodeExecution[] executions = new CodeExecution[testCases.length];
