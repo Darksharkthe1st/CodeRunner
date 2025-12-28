@@ -50,7 +50,7 @@ public class IDEController {
     }
 
     @PostMapping("/run")
-    public RunResult runSubmission(@JsonProperty("input") String input) throws IOException, InterruptedException {
+    public RunResult runSubmission(@RequestBody String input) throws IOException, InterruptedException {
         CodeSubmission latestSubmission = userData.getLastSubmission();
         CodeExecution execution = new CodeExecution(latestSubmission, input);
 

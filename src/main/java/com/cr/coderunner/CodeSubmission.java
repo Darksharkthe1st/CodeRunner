@@ -42,7 +42,7 @@ public class CodeSubmission {
         };
     }
 
-    public void build(ProcessBuilder p, CodeExecution exec) {
+    public void build(ProcessBuilder processBuilder, CodeExecution exec) {
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
         File execDir = new File(userDir, ".test");
@@ -83,8 +83,13 @@ public class CodeSubmission {
             return;
         }
 
-        p.redirectInput(inputFile);
-        p.directory(execDir);
+        processBuilder.redirectInput(inputFile);
+        processBuilder.directory(execDir);
+
+        //Use different execution methods for different languages
+        if (language.equals("Java")) {
+            processBuilder.command("java", codeFile.getAbsolutePath());
+        }
     }
 
     /** runs the code provided, w/ input from exec and outputting into exec
@@ -95,9 +100,9 @@ public class CodeSubmission {
         ProcessBuilder processBuilder = new ProcessBuilder();
         Process process;
 
-        //Assume the worst:
-        exec.success = false;
-        exec.runtime = 0;
+        //Blank values for now:
+        exec.success = true;
+        exec.runtime = -1;
         exec.output = "";
         exec.error = "";
         exec.exitStatus = "";
@@ -109,11 +114,6 @@ public class CodeSubmission {
             //If build failed, stop running
             if (!exec.success) {
                 return;
-            }
-
-            //Use different execution methods for different languages
-            if (language.equals("Java")) {
-                processBuilder.command("java", codeFile.getAbsolutePath());
             }
 
             //Try to start the process
@@ -155,7 +155,7 @@ public class CodeSubmission {
      * @throws IOException if program output cannot be accessed
      * @throws InterruptedException for thread.sleep calls on the main process (Spring Boot server)
      */
-    public void runProcess(Process process, CodeExecution exec) throws Exception {
+    public void runProcess(Process process, CodeExecution exec) throws InterruptedException, IOException, RuntimeException {
         //Use BufferedReader/StringBuilder to store outputs
         BufferedReader errorBuffer = process.errorReader();
         BufferedReader outputBuffer = process.inputReader();
