@@ -1,6 +1,5 @@
-package com.cr.coderunner;
+package com.cr.coderunner.model;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 

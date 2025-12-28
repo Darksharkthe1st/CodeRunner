@@ -1,5 +1,6 @@
-package com.cr.coderunner;
+package com.cr.coderunner.service;
 
+import com.cr.coderunner.model.UserData;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

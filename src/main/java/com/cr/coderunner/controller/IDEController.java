@@ -1,8 +1,11 @@
-package com.cr.coderunner;
+package com.cr.coderunner.controller;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.cr.coderunner.dto.RunResult;
+import com.cr.coderunner.model.CodeExecution;
+import com.cr.coderunner.model.CodeSubmission;
+import com.cr.coderunner.model.Problem;
+import com.cr.coderunner.model.UserData;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -10,15 +13,17 @@ import java.util.Map;
 
 @RestController
 public class IDEController {
+    //TODO: Switch from use of userData class to SQL-Based dataset
+    private final UserData userData;
+
+    public IDEController(UserData userData) {
+        this.userData = userData;
+    }
 
     @GetMapping("/")
     public String index() {
         return "Welcome to CodeRunner! Go to Route /submit to upload code and /check to view it.";
     }
-
-    //Using simple field injection to create bean, autowired
-    @Autowired
-    public UserData userData;
 
     //Created sample get mapping for testing purposes
     @GetMapping("/check")
@@ -40,23 +45,6 @@ public class IDEController {
     @GetMapping("/get_problems")
     public Map<String, Problem> getProblems() {
         return userData.problems;
-    }
-
-    //TODO: Move to its own file when used by more than one function
-    public static class RunResult {
-        public boolean success;
-        public double runtime;
-        public String output;
-        public String error;
-        public String exitStatus;
-
-        public RunResult(CodeExecution execution) {
-            this.success = execution.success;
-            this.runtime = execution.runtime;
-            this.output = execution.output;
-            this.error = execution.error;
-            this.exitStatus = execution.exitStatus;
-        }
     }
 
     @PostMapping("/run")

@@ -1,4 +1,4 @@
-package com.cr.coderunner;
+package com.cr.coderunner.model;
 
 public class CodeExecution extends Thread {
     public CodeSubmission codeSubmission;

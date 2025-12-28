@@ -1,4 +1,4 @@
-package com.cr.coderunner;
+package com.cr.coderunner.model;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
