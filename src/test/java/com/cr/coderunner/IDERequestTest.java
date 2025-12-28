@@ -1,5 +1,6 @@
 package com.cr.coderunner;
 
+import com.cr.coderunner.controller.IDEController;
 import com.cr.coderunner.dto.RunResult;
 import com.cr.coderunner.model.CodeSubmission;
 import org.junit.jupiter.api.Test;
@@ -11,11 +12,20 @@ import org.springframework.test.web.servlet.client.ExchangeResult;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.StatusResultMatchersExtensionsKt.isEqualTo;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
-public class HttpRequestTest {
+public class IDERequestTest {
+
+    @Autowired
+    private IDEController controller;
+
+    @Test
+    void contextLoads() throws Exception {
+        assertThat(controller).isNotNull();
+    }
 
     @LocalServerPort
     int port;
