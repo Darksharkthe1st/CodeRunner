@@ -30,14 +30,4 @@ public class UserData {
             return codeAttempts.getLast();
         }
     }
-
-    public String runLatest(String input) throws IOException, InterruptedException {
-        //Get the last submission to be ran, notify user if impossible
-        CodeSubmission current = getLastSubmission();
-        if (current == null) {
-            return "ERROR: No submission to be ran";
-        }
-
-        return current.buildAndRun(input);
-    }
 }

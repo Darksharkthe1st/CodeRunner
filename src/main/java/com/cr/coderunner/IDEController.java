@@ -29,16 +29,20 @@ public class IDEController {
     @PostMapping("/submit")
     public void postSubmission(@RequestBody CodeSubmission codeSubmission) {
         userData.addAttempt(codeSubmission);
-        System.out.println("Did that " + codeSubmission.code);
     }
 
     @GetMapping("/run")
     public Map runSubmission() throws IOException, InterruptedException {
-        String status = userData.runLatest(""); //TODO: Change to store input separately somehow
+        CodeSubmission latestSubmission = userData.getLastSubmission();
+        CodeExecution execution = new CodeExecution(latestSubmission, latestSubmission.input);
+
+        execution.start();
+        execution.join();
+
         return Map.of(
-                "result", status,
-                "output", userData.getLastSubmission().latestOutput,
-                "error", userData.getLastSubmission().latestError
+                "result", execution.exitStatus,
+                "output", execution.output,
+                "error", execution.error
         );
     }
     

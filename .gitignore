@@ -26,3 +26,4 @@ replay_pid*
 /.test
 /test/
 /frontend/node_modules
+/target/maven-status/maven-compiler-plugin/compile

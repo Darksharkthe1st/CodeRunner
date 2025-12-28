@@ -15,18 +15,11 @@ public class CodeSubmission {
     public final String code;
     public final String language;
     public final String input;
-    public boolean success;
-    public double runtime;
-    public String latestOutput;
-    public String latestError;
 
     public CodeSubmission(String code, String language, String input) {
         this.code = code;
         this.language = language;
         this.input = input;
-        this.success = false;
-        this.runtime = -1;
-        this.latestOutput = null;
     }
 
     public String getExtensionByLang(String language) {
@@ -39,8 +32,18 @@ public class CodeSubmission {
         };
     }
 
-    public String buildAndRun(String inputs) throws IOException, InterruptedException {
-        inputs = input; //TODO: Switch to different format for storing inputs (this line is temporary)
+    public void run() {
+        run(new CodeExecution(
+                this,
+                this.input
+        ));
+    }
+
+    public void run(CodeExecution exec) {
+        //TODO: Remove in the future; temporary
+        if (exec.input == null) {
+            exec.input = this.input;
+        }
 
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
@@ -56,21 +59,35 @@ public class CodeSubmission {
             System.out.println("testing directory not detected; new directory created.");
         }
 
-        //Create a temporary code file with an appropriate filename
-        File codeFile = new File(execDir, "file" + extension);
-        if (!codeFile.createNewFile()) {
-            System.out.println("Code file already exists; overwriting.");
-        }
+        //Files for code/input to be pulled from
+        File codeFile, inputFile;
 
-        //Create a temporary input file with an appropriate filename
-        File inputFile = new File(execDir, "input.txt");
-        if (!inputFile.createNewFile()) {
-            System.out.println("Input file already exists; overwriting.");
-        }
+        try {
+            //Create a temporary code file with an appropriate filename
+            codeFile = new File(execDir, "file" + extension);
+            if (!codeFile.createNewFile()) {
+                System.out.println("Code file already exists; overwriting.");
+            }
 
-        //Overwrite existing text files
-        Files.writeString(codeFile.toPath(),this.code, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        Files.writeString(inputFile.toPath(), inputs, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            //Create a temporary input file with an appropriate filename
+            inputFile = new File(execDir, "input.txt");
+            if (!inputFile.createNewFile()) {
+                System.out.println("Input file already exists; overwriting.");
+            }
+
+            //Overwrite existing text files
+            Files.writeString(codeFile.toPath(),  this.code,  StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(inputFile.toPath(), exec.input, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+            //Catch exception if files cannot be written to
+        } catch (IOException e) {
+            exec.success = false;
+            exec.runtime = -1;
+            exec.output = "";
+            exec.error = "";
+            exec.exitStatus = "could not write to code file.";
+            return;
+        }
 
         //Prepare ProcessBuilder to run code file accordingly (e.g. java xxx.java)
         ProcessBuilder p = new ProcessBuilder();
@@ -83,50 +100,61 @@ public class CodeSubmission {
         }
 
         //Run the process, wait until complete
-        String status = runProcess(p.start());
+        String status = null;
+        try {
+            runProcess(p.start(), exec);
+
+            //Catch internal errors in runProcess code in case any buffers fail at closing/threads can't join
+        } catch (IOException | InterruptedException e) {
+            exec.success = false;
+            exec.runtime = 0;
+            exec.output = "";
+            exec.error = "";
+            exec.exitStatus += "could not read stdout/stderr.";
+            return;
+        }
 
         //TODO: use Docker to ensure dev env has all needed build tools
 
-        //TODO: Add evaluation of code outputs by checking variable equality (start with ints)
-
         //Print out latest output for now for testing purposes
-        System.out.println("OUT:\n" + this.latestOutput);
+        System.out.println("OUT:\n" + exec.output);
         //Print out latest error for testing purposes
-        System.out.println("ERR:\n" + this.latestError);
+        System.out.println("ERR:\n" + exec.error);
 
         //Set success to true/false depending on status
-        this.success = status.equals("success");
-
-        return status;
+        exec.success = exec.exitStatus.equals("success");
     }
 
     /** Runs protected process with Time and Output Limits. Returns status depending on if those limits are hit
      * @param process Process to be run
-     * @return "success" for completion, "Time Limit Exceeded" for surpassing CodeSubmission.TIME_LIMIT_SECS, "Output Limit Exceeded" for surpassing max String size in output
+     * @param exec Stores process outputs and status info
      * @throws IOException if program output cannot be accessed
      * @throws InterruptedException for thread.sleep calls on the main process (Spring Boot server)
      */
-    public String runProcess(Process process) throws IOException, InterruptedException {
+    public void runProcess(Process process, CodeExecution exec) throws InterruptedException, IOException {
         //Use BufferedReader/StringBuilder to store outputs
         BufferedReader errorBuffer = process.errorReader();
         BufferedReader outputBuffer = process.inputReader();
         StringBuilder outputs = new StringBuilder();
         StringBuilder errors = new StringBuilder();
 
-        latestError = "success";
+        exec.exitStatus = "";
 
         //Thread to read out the buffer values for output
         Thread readOut = new Thread() {
             public void run() {
                 String outLine = "";
+                //While there's more to be read:
                 while (outLine != null) {
                     try {
+                        //Read from the buffer only if not null
                         outLine = outputBuffer.readLine();
                         if (outLine != null) {
                             outputs.append(outLine); outputs.append("\n");
                         }
                     } catch (OutOfMemoryError | IOException e) {
-                        latestError = "Output Limit Exceeded";
+                        //Notify user if reading failed
+                        exec.exitStatus += "Output Limit Exceeded\n";
                         break;
                     }
                 }
@@ -137,14 +165,17 @@ public class CodeSubmission {
         Thread readErr = new Thread() {
             public void run() {
                 String errLine = "";
+                //While there's more to be read:
                 while (errLine != null) {
                     try {
+                        //Read from the buffer only if not null
                         errLine = errorBuffer.readLine();
                         if (errLine != null) {
                             errors.append(errLine); errors.append("\n");
                         }
                     } catch (OutOfMemoryError | IOException e) {
-                        latestError = "Error Limit Exceeded";
+                        //Notify user if reading failed
+                        exec.exitStatus += "Error Limit Exceeded\n";
                         break;
                     }
                 }
@@ -160,7 +191,7 @@ public class CodeSubmission {
 
         //Time limit exceeded
         if (process.isAlive()) {
-            latestError = "Time Limit Exceeded.";
+            exec.exitStatus += "Time Limit Exceeded.\n";
         }
 
         try {
@@ -172,8 +203,8 @@ public class CodeSubmission {
         }
 
         //If the process exited improperly and an error wasn't caught, note it
-        if (process.exitValue() != 0 && latestError.equals("success")) {
-            latestError = "Program exited with incorrect return value: " + process.exitValue();
+        if (process.exitValue() != 0 && exec.exitStatus.equals("success")) {
+            exec.exitStatus += "Program exited with incorrect return value: " + process.exitValue() + "\n";
         }
 
         //Stop reading input/error data, close buffers
@@ -182,19 +213,14 @@ public class CodeSubmission {
         outputBuffer.close();
         errorBuffer.close();
 
-        //Store the error/success values to status
-        String status = latestError;
-
         //Show the user the error message if it comes up
-        if (!status.equals("success")) {
-            outputs.append("\n====");
-            outputs.append(status);
+        if (!exec.exitStatus.isEmpty()) {
+            outputs.append("\n====ERROR(S):");
+            outputs.append(exec.exitStatus);
         }
 
         //Save the final output
-        this.latestOutput = outputs.toString();
-        this.latestError = errors.toString();
-
-        return status;
+        exec.output = outputs.toString();
+        exec.error = errors.toString();
     }
 }
