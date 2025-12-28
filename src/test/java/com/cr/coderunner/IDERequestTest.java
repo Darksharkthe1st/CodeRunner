@@ -61,7 +61,7 @@ public class IDERequestTest {
                 .exchange()
                 .expectBody(RunResult.class)
                 .isEqualTo(new RunResult(
-                        false,
+                        true,
                         -1.0,
                         "Hi\n",
                         "",
