@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.InputMismatchException;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +39,7 @@ public class CodeSubmission {
         };
     }
 
-    public void build(ProcessBuilder processBuilder, CodeExecution exec) {
+    public File[] build(ProcessBuilder processBuilder, CodeExecution exec) {
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
         File execDir = new File(userDir, ".test");
@@ -57,17 +58,13 @@ public class CodeSubmission {
         File codeFile, inputFile;
 
         try {
-            //Create a temporary code file with an appropriate filename
-            codeFile = new File(execDir, "file" + extension);
-            if (!codeFile.createNewFile()) {
-                System.out.println("Code file already exists; overwriting.");
-            }
+            //Create temporary code/input files with an appropriate filename
+            codeFile = Files.createTempFile(execDir.toPath(),"code-", "." + extension).toFile();
+            inputFile = Files.createTempFile(execDir.toPath(),"input-", ".txt").toFile();
 
-            //Create a temporary input file with an appropriate filename
-            inputFile = new File(execDir, "input.txt");
-            if (!inputFile.createNewFile()) {
-                System.out.println("Input file already exists; overwriting.");
-            }
+            //Ensure files are temporary only
+            codeFile.deleteOnExit();
+            inputFile.deleteOnExit();
 
             //Overwrite existing text files
             Files.writeString(codeFile.toPath(),  this.code,  StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -76,7 +73,7 @@ public class CodeSubmission {
             //Catch exception if files cannot be written to
         } catch (IOException e) {
             exec.exitStatus += "could not write to code file.";
-            return;
+            return null;
         }
 
         processBuilder.redirectInput(inputFile);
@@ -86,6 +83,8 @@ public class CodeSubmission {
         if (language.equals("Java")) {
             processBuilder.command("java", codeFile.getAbsolutePath());
         }
+
+        return new File[] {codeFile, inputFile};
     }
 
     /** runs the code provided, w/ input from exec and outputting into exec
@@ -97,29 +96,28 @@ public class CodeSubmission {
         Process process;
 
         //Blank values for now:
-        exec.success = true;
+        exec.success = false;
         exec.runtime = -1;
         exec.output = "";
         exec.error = "";
         exec.exitStatus = "";
 
-        synchronized (buildLock) {
-            //Build code (AKA write data to files);
-            build(processBuilder, exec);
+        //Build code (AKA write data to files);
+        File[] files = build(processBuilder, exec);
 
-            //If build failed, stop running
-            if (!exec.success) {
-                return;
-            }
-
-            //Try to start the process
-            try {
-                process = processBuilder.start();
-            } catch (IOException e) {
-                exec.exitStatus += "could not start program.";
-                return;
-            }
+        //If build failed, stop running
+        if (files == null) {
+            return;
         }
+
+        //Try to start the process
+        try {
+            process = processBuilder.start();
+        } catch (IOException e) {
+            closeRun(files, exec, "could not start program.");
+            return;
+        }
+
 
         //Run the process, wait until complete
         try {
@@ -127,19 +125,32 @@ public class CodeSubmission {
 
             //Catch internal errors in runProcess code in case any buffers fail at closing/threads can't join
         } catch (IOException | InterruptedException e) {
-            exec.exitStatus += "could not read stdout/stderr.";
+            closeRun(files, exec,"could not read stdout/stderr.");
             return;
         } catch (RuntimeException e) {
             //Assume that the exitStatus was already changed.
-            return;
+
         }
 
         //TODO: use Docker to ensure dev env has all needed build tools
+        
+        closeRun(files, exec, "success");
 
+    }
+
+    public void closeRun(File[] files, CodeExecution exec, String newStatus) {
+        exec.exitStatus += newStatus;
         //Print out latest output for now for testing purposes
         System.out.println("OUT:\n" + exec.output);
         //Print out latest error for testing purposes
         System.out.println("ERR:\n" + exec.error);
+
+        deletion:
+        //Delete temporary files, if possible
+        if (!files[0].delete() || !files[1].delete()) {
+            exec.exitStatus += "code files failed to delete; terminating";
+            return;
+        }
 
         //Set success to true/false depending on status
         exec.success = exec.exitStatus.equals("success");

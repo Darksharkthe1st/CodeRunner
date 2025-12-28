@@ -37,16 +37,6 @@ public class IDEController {
         userData.addAttempt(codeSubmission);
     }
 
-    @PostMapping("/add_problem")
-    public void addProblem(@RequestBody Problem problem) {
-        userData.problems.put(problem.name, problem);
-    }
-
-    @GetMapping("/get_problems")
-    public Map<String, Problem> getProblems() {
-        return userData.problems;
-    }
-
     @PostMapping("/run")
     public RunResult runSubmission(@RequestBody String input) throws IOException, InterruptedException {
         CodeSubmission latestSubmission = userData.getLastSubmission();

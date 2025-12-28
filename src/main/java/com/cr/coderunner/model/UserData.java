@@ -21,9 +21,9 @@ public class UserData {
     }
 
     //Add an attempt to the user's history
-    public int addAttempt(CodeSubmission code) {
+    public void addAttempt(CodeSubmission code) {
         codeAttempts.add(code);
-        return ++attempts;
+        attempts++;
     }
 
     public void addProblem(Problem p) {

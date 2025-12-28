@@ -1,6 +1,7 @@
 package com.cr.coderunner.model;
 
 
+import com.cr.coderunner.dto.RunResult;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -28,7 +29,7 @@ public class Problem {
         this.name = name;
     }
 
-    public CodeExecution[] runCases(CodeSubmission codeSubmission) throws IOException, InterruptedException {
+    public CodeExecution[] runCases(CodeSubmission codeSubmission) throws InterruptedException {
         CodeExecution[] executions = new CodeExecution[testCases.length];
 
         for (int i = 0; i < executions.length; i++) {
@@ -41,6 +42,14 @@ public class Problem {
         }
 
         return executions;
+    }
+
+    public static RunResult[] simplifyCases(CodeExecution[] cases) {
+        RunResult[] results = new RunResult[cases.length];
+        for (int i = 0; i < results.length; i++) {
+            results[i] = new RunResult(cases[i]);
+        }
+        return results;
     }
 
     public boolean validateCases(CodeExecution[] executions) throws IOException, InterruptedException {
