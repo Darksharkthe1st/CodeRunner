@@ -1,5 +1,6 @@
 package com.cr.coderunner.controller;
 
+import com.cr.coderunner.dto.ManyResults;
 import com.cr.coderunner.dto.RunResult;
 import com.cr.coderunner.model.CodeSubmission;
 import com.cr.coderunner.model.Problem;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,8 +34,8 @@ public class ProblemController {
     }
 
     @PostMapping("/try_problem")
-    public RunResult[] tryProblem(@RequestBody CodeSubmission submission) throws InterruptedException {
+    public ManyResults tryProblem(@RequestBody CodeSubmission submission) throws InterruptedException {
         Problem problem = userData.problems.get(submission.problemName);
-        return Problem.simplifyCases(problem.runCases(submission));
+        return new ManyResults(Problem.simplifyCases(problem.runCases(submission)));
     }
 }
