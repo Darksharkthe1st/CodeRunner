@@ -55,16 +55,21 @@ public class CodeSubmission {
         }
 
         //Files for code/input to be pulled from
-        File codeFile, inputFile;
+        File dirFile, codeFile, inputFile;
 
         try {
+            //Create a temporary directory to store the code
+            Path tempDir = Files.createTempDirectory(execDir.toPath(),"run");
+
             //Create temporary code/input files with an appropriate filename
-            codeFile = Files.createTempFile(execDir.toPath(),"code-", "." + extension).toFile();
-            inputFile = Files.createTempFile(execDir.toPath(),"input-", ".txt").toFile();
+            codeFile = Files.createTempFile(tempDir,"code-", "." + extension).toFile();
+            inputFile = Files.createTempFile(tempDir,"input-", ".txt").toFile();
+            dirFile = new File(tempDir.toUri());
 
             //Ensure files are temporary only
             codeFile.deleteOnExit();
             inputFile.deleteOnExit();
+            dirFile.deleteOnExit();
 
             //Overwrite existing text files
             Files.writeString(codeFile.toPath(),  this.code,  StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -84,7 +89,7 @@ public class CodeSubmission {
             processBuilder.command("java", codeFile.getAbsolutePath());
         }
 
-        return new File[] {codeFile, inputFile};
+        return new File[] {codeFile, inputFile, dirFile};
     }
 
     /** runs the code provided, w/ input from exec and outputting into exec
@@ -145,10 +150,16 @@ public class CodeSubmission {
         //Print out latest error for testing purposes
         System.out.println("ERR:\n" + exec.error);
 
-        deletion:
         //Delete temporary files, if possible
         if (!files[0].delete() || !files[1].delete()) {
             exec.exitStatus += "code files failed to delete; terminating";
+            return;
+        }
+
+        try {
+            Files.delete(files[2].toPath());
+        } catch (IOException e) {
+            exec.exitStatus += "Failed to delete temp directory; System issues.";
             return;
         }
 
