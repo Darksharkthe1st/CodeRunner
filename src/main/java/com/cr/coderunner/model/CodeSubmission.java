@@ -8,6 +8,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,11 +43,9 @@ public class CodeSubmission {
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile) {
         return switch (language) {
             case "Java" -> List.of("java", codeFile.getAbsolutePath());
-            case "C" -> List.of("docker", "run", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc-buildonly", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
+            case "C" -> List.of("docker", "run", "--cidfile", /*"--pids-limit=64", "--memory=256m", "--cpus=0.5",*/ Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc-buildonly", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
             default -> throw new IllegalStateException("Unexpected value: " + language);
         };
-
-        //docker run --rm -v ./tmp/run123:/sandbox gcc-buildonly bash -lc "gcc sandbox/main.c -o sandbox/main && ./sandbox/main"
     }
 
     public File build(ProcessBuilder processBuilder, CodeExecution exec) {
@@ -60,9 +59,8 @@ public class CodeSubmission {
             throw new InputMismatchException(this.language + " is not a supported language in CodeRunner.");
 
         //Make a new directory if needed
-        if (execDir.mkdir()) {
+        if (execDir.mkdir())
             System.out.println("testing directory not detected; new directory created.");
-        }
 
         //Files for code/input to be pulled from
         File dirFile, codeFile, inputFile;
@@ -131,24 +129,12 @@ public class CodeSubmission {
             return;
         }
 
+        //TODO: use Docker to ensure dev env has all needed build tools
 
         //Run the process, wait until complete
-        try {
-            runProcess(process, exec);
-
-            //Catch internal errors in runProcess code in case any buffers fail at closing/threads can't join
-        } catch (IOException | InterruptedException e) {
-            closeRun(dirFile, exec,"could not read stdout/stderr.");
-            return;
-
-        } catch (RuntimeException e) {
-            //Assume that the exitStatus was already changed.
-            exec.exitStatus = "Runtime Error: " + exec.exitStatus;
-            closeRun(dirFile, exec, "");
-        }
-
-        //TODO: use Docker to ensure dev env has all needed build tools
+        runProcess(process, processBuilder, exec, language, dirFile);
         closeRun(dirFile, exec, "");
+
 
     }
 
@@ -159,11 +145,13 @@ public class CodeSubmission {
         //Print out latest error for testing purposes
         System.out.println("ERR:\n" + exec.error);
 
+        System.out.println("YO WE HERE GNG");
         //Delete temporary files, if possible
         try {
             FileUtils.cleanDirectory(dirFile);
         } catch (IOException e) {
             exec.exitStatus += "code files failed to delete; terminating";
+            e.printStackTrace();
             return;
         }
 
@@ -186,12 +174,15 @@ public class CodeSubmission {
      * @throws IOException if program output cannot be accessed
      * @throws InterruptedException for thread.sleep calls on the main process (Spring Boot server)
      */
-    public void runProcess(Process process, CodeExecution exec) throws InterruptedException, IOException, RuntimeException {
+    public void runProcess(Process process, ProcessBuilder builder, CodeExecution exec, String language, File dirFile) {
+        System.out.println("Process ran0.");
+
         //Use BufferedReader/StringBuilder to store outputs
         BufferedReader errorBuffer = process.errorReader();
         BufferedReader outputBuffer = process.inputReader();
         StringBuilder outputs = new StringBuilder();
         StringBuilder errors = new StringBuilder();
+
 
         exec.exitStatus = "";
 
@@ -237,25 +228,65 @@ public class CodeSubmission {
             }
         };
 
+        System.out.println("Process ran1.");
+
         //Begin reading stdout
         readOut.start();
         readErr.start();
 
         //wait for the process to finish
-        process.waitFor(TIME_LIMIT_SECS, TimeUnit.SECONDS);
+        try {
+            process.waitFor(TIME_LIMIT_SECS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            exec.exitStatus += "Failed to poll program\n";
+        }
+
+        System.out.println("Process ran2.");
 
         //Time limit exceeded
         if (process.isAlive()) {
             exec.exitStatus += "Time Limit Exceeded.\n";
         }
 
-        try {
-            //Kill the process no matter what to avoid any rogue processes
-            process.destroy();
-        } catch (IllegalThreadStateException e) {
-            //If the process cannot be destroyed normally, forcibly kill it
-            process.destroyForcibly();
+        System.out.println("Process ran3.");
+
+        if (language.equals("Java")) {
+
+            try {
+                //Kill the process no matter what to avoid any rogue processes
+                process.destroy();
+            } catch (IllegalThreadStateException e) {
+                //If the process cannot be destroyed normally, forcibly kill it
+                process.destroyForcibly();
+            }
+        } else if (language.equals("C")) {
+            try {
+                //Get the file where the docker id is stored and
+                File dockerFile = new File(dirFile, "cidfile.txt");
+                String dockerId = Files.readAllLines(dockerFile.toPath()).get(0);
+                builder.command("docker", "stop", dockerId, "||", "docker", "kill", dockerId);
+                builder.start();
+
+                //Block this thread until the process is dead
+                builder.command("docker", "wait", dockerId);
+                Process waiter = builder.start();
+                waiter.waitFor(Duration.ofSeconds(5));
+
+                if (waiter.isAlive()) {
+                    exec.exitStatus += "Failed to close docker container\n";
+                }
+                System.out.println("Waited for thread.");
+            } catch (IOException | InterruptedException e) {
+                exec.exitStatus += "Code failed to exit.\n";
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
+
+        System.out.println("Process ran4.");
 
         //If the process exited improperly and an error wasn't caught, note it
         if (process.exitValue() != 0 && exec.exitStatus.equals("success")) {
@@ -263,10 +294,17 @@ public class CodeSubmission {
         }
 
         //Stop reading input/error data, close buffers
-        readOut.join();
-        readErr.join();
-        outputBuffer.close();
-        errorBuffer.close();
+        try {
+            readOut.join();
+            readErr.join();
+            outputBuffer.close();
+            errorBuffer.close();
+        } catch (InterruptedException | IOException e) {
+            exec.exitStatus += "Failed to read stdout/stderr.\n";
+        }
+
+
+        System.out.println("Process ran4.");
 
         //Show the user the error message if it comes up
         if (!exec.exitStatus.isEmpty()) {
