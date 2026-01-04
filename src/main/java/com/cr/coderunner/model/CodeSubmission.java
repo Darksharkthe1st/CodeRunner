@@ -2,6 +2,7 @@ package com.cr.coderunner.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -147,7 +148,7 @@ public class CodeSubmission {
 
         //TODO: use Docker to ensure dev env has all needed build tools
 
-        closeRun(files, exec, "success");
+        closeRun(files, exec, "");
 
     }
 
@@ -159,7 +160,9 @@ public class CodeSubmission {
         System.out.println("ERR:\n" + exec.error);
 
         //Delete temporary files, if possible
-        if (!files[0].delete() || !files[1].delete()) {
+        try {
+            FileUtils.cleanDirectory(files[2]);
+        } catch (IOException e) {
             exec.exitStatus += "code files failed to delete; terminating";
             return;
         }
@@ -172,7 +175,9 @@ public class CodeSubmission {
         }
 
         //Set success to true/false depending on status
-        exec.success = exec.exitStatus.equals("success");
+        exec.success = exec.exitStatus.isEmpty();
+        if (exec.success)
+            exec.exitStatus = "success";
     }
 
     /** Runs protected process with Time and Output Limits. Returns status depending on if those limits are hit
