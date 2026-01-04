@@ -49,7 +49,7 @@ public class CodeSubmission {
         //docker run --rm -v ./tmp/run123:/sandbox gcc-buildonly bash -lc "gcc sandbox/main.c -o sandbox/main && ./sandbox/main"
     }
 
-    public File[] build(ProcessBuilder processBuilder, CodeExecution exec) {
+    public File build(ProcessBuilder processBuilder, CodeExecution exec) {
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
         File execDir = new File(userDir, ".test");
@@ -97,7 +97,7 @@ public class CodeSubmission {
         //Run different execution methods for different languages
         processBuilder.command(getCommandByFiles(language, codeFile, dirFile));
 
-        return new File[] {codeFile, inputFile, dirFile};
+        return dirFile;
     }
 
     /** runs the code provided, w/ input from exec and outputting into exec
@@ -116,10 +116,10 @@ public class CodeSubmission {
         exec.exitStatus = "";
 
         //Build code (AKA write data to files);
-        File[] files = build(processBuilder, exec);
+        File dirFile = build(processBuilder, exec);
 
         //If build failed, stop running
-        if (files == null) {
+        if (dirFile == null) {
             return;
         }
 
@@ -127,7 +127,7 @@ public class CodeSubmission {
         try {
             process = processBuilder.start();
         } catch (IOException e) {
-            closeRun(files, exec, "could not start program.");
+            closeRun(dirFile, exec, "could not start program.");
             return;
         }
 
@@ -138,21 +138,21 @@ public class CodeSubmission {
 
             //Catch internal errors in runProcess code in case any buffers fail at closing/threads can't join
         } catch (IOException | InterruptedException e) {
-            closeRun(files, exec,"could not read stdout/stderr.");
+            closeRun(dirFile, exec,"could not read stdout/stderr.");
             return;
+
         } catch (RuntimeException e) {
             //Assume that the exitStatus was already changed.
             exec.exitStatus = "Runtime Error: " + exec.exitStatus;
-            closeRun(files, exec, "");
+            closeRun(dirFile, exec, "");
         }
 
         //TODO: use Docker to ensure dev env has all needed build tools
-
-        closeRun(files, exec, "");
+        closeRun(dirFile, exec, "");
 
     }
 
-    public void closeRun(File[] files, CodeExecution exec, String newStatus) {
+    public void closeRun(File dirFile, CodeExecution exec, String newStatus) {
         exec.exitStatus += newStatus;
         //Print out latest output for now for testing purposes
         System.out.println("OUT:\n" + exec.output);
@@ -161,14 +161,14 @@ public class CodeSubmission {
 
         //Delete temporary files, if possible
         try {
-            FileUtils.cleanDirectory(files[2]);
+            FileUtils.cleanDirectory(dirFile);
         } catch (IOException e) {
             exec.exitStatus += "code files failed to delete; terminating";
             return;
         }
 
         try {
-            Files.delete(files[2].toPath());
+            Files.delete(dirFile.toPath());
         } catch (IOException e) {
             exec.exitStatus += "Failed to delete temp directory; System issues.";
             return;
