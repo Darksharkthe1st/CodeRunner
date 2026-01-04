@@ -34,6 +34,42 @@ public class IDERequestTest {
     private RestTestClient restTestClient;
 
     @Test
+    public void CShouldRun() {
+        //Code to be tested
+        String code = """
+                #include <stdio.h>
+                
+                int main(int argc, char *argv[]) {
+                    printf("Hi\\n");
+                    return 0;
+                }
+                """;
+
+        //Create submission with code to submit via post request
+        CodeSubmission mySubmission = new CodeSubmission(code, "C", "one");
+
+        //Post submission
+        restTestClient.post()
+                .uri("http://localhost:%d/submit".formatted(port))
+                .body(mySubmission)
+                .exchange();
+
+        //Run submission, check equality with expected result
+        restTestClient.post()
+                .uri("http://localhost:%d/run".formatted(port))
+                .body("one")
+                .exchange()
+                .expectBody(RunResult.class)
+                .isEqualTo(new RunResult(
+                        true,
+                        -1.0,
+                        "Hi\n",
+                        "",
+                        "success"
+                ));
+    }
+
+    @Test
     void codeShouldRun() {
         //Code to be tested
         String code = """

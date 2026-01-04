@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CodeSubmission {
@@ -32,11 +33,19 @@ public class CodeSubmission {
     public String getExtensionByLang(String language) {
         return switch (language) {
             case "Java" -> ".java";
-            case "Python" -> ".py";
             case "C" -> ".c";
-            case "CPP" -> ".cpp";
             default -> null;
         };
+    }
+
+    public List<String> getCommandByFiles(String language, File codeFile, File dirFile) {
+        return switch (language) {
+            case "Java" -> List.of("java", codeFile.getAbsolutePath());
+            case "C" -> List.of("docker", "run", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc-buildonly", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
+            default -> throw new IllegalStateException("Unexpected value: " + language);
+        };
+
+        //docker run --rm -v ./tmp/run123:/sandbox gcc-buildonly bash -lc "gcc sandbox/main.c -o sandbox/main && ./sandbox/main"
     }
 
     public File[] build(ProcessBuilder processBuilder, CodeExecution exec) {
@@ -84,10 +93,8 @@ public class CodeSubmission {
         processBuilder.redirectInput(inputFile);
         processBuilder.directory(execDir);
 
-        //Use different execution methods for different languages
-        if (language.equals("Java")) {
-            processBuilder.command("java", codeFile.getAbsolutePath());
-        }
+        //Run different execution methods for different languages
+        processBuilder.command(getCommandByFiles(language, codeFile, dirFile));
 
         return new File[] {codeFile, inputFile, dirFile};
     }
@@ -134,7 +141,8 @@ public class CodeSubmission {
             return;
         } catch (RuntimeException e) {
             //Assume that the exitStatus was already changed.
-
+            exec.exitStatus = "Runtime Error: " + exec.exitStatus;
+            closeRun(files, exec, "");
         }
 
         //TODO: use Docker to ensure dev env has all needed build tools
