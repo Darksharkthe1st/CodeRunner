@@ -65,37 +65,59 @@ function App() {
     }
   }
 
-  return (<>
-    <TextWindow text={text} setText={setText} />
-    <div className="flex justify-center items-center gap-4 mt-4">
-      <select
-        value={selectedLanguage}
-        onChange={(e) => setSelectedLanguage(e.target.value)}
-        className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-      >
-        {supportedLanguages.map((lang) => (
-          <option key={lang} value={lang}>
-            {lang}
-          </option>
-        ))}
-      </select>
-      <button
-        onClick={handleSubmit}
-        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-      >
-        Submit
-      </button>
-    </div>
-    {response && (
-      <div className="w-full max-w-2xl mx-auto p-4">
-        <textarea
-          value={response}
-          readOnly
-          className="w-full h-64 p-4 border-2 border-gray-300 rounded-2xl resize-none bg-gray-50 font-mono text-sm"
-        />
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="bg-blue-600 text-white p-4 shadow-lg">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Code Runner</h1>
+          <div className="flex items-center gap-4">
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="px-4 py-2 border-2 border-white bg-blue-500 text-white rounded-lg focus:outline-none focus:border-blue-300"
+            >
+              {supportedLanguages.map((lang) => (
+                <option key={lang} value={lang}>
+                  {lang}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleSubmit}
+              className="px-6 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 grid grid-cols-2 gap-4 p-4">
+
+        {/* Left Side - Input Box */}
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold mb-2">Code</h2>
+          <div className="flex-1">
+            <TextWindow text={text} setText={setText} />
+          </div>
+        </div>
+
+        {/* Right Side - Result Box */}
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold mb-2">Output</h2>
+          <textarea
+            value={response}
+            readOnly
+            className="flex-1 p-4 border-2 border-gray-300 rounded-2xl resize-none bg-gray-50 font-mono text-sm"
+            placeholder="Results will appear here..."
+          />
+        </div>
+
+        
       </div>
-    )}
-  </>
+    </div>
   )
 }
 
