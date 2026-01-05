@@ -20,6 +20,11 @@ public class IDEController {
         this.userData = userData;
     }
 
+    @GetMapping("/supported")
+    public String[] getSupported() {
+        return new String[] {"Java", "C"};
+    }
+
     @GetMapping("/")
     public String index() {
         return "Welcome to CodeRunner! Go to Route /submit to upload code and /check to view it.";
