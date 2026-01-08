@@ -36,14 +36,21 @@ public class CodeSubmission {
         return switch (language) {
             case "Java" -> ".java";
             case "C" -> ".c";
+            case "Python" -> ".py";
             default -> null;
         };
     }
 
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile) {
+        List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--cidfile", Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
+        cmds.addAll(switch (language) {
+            case "C" -> List.of("gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
+            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "\"python3 sandbox/" + codeFile.getName() + "\"");
+            default -> List.of();
+        });
         return switch (language) {
             case "Java" -> List.of("java", codeFile.getAbsolutePath());
-            case "C" -> List.of("docker", "run", "--cidfile", Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
+            case "C", "Python", "CPP" -> cmds;
             default -> throw new IllegalStateException("Unexpected value: " + language);
         };
     }
