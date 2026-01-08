@@ -43,7 +43,7 @@ public class CodeSubmission {
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile) {
         return switch (language) {
             case "Java" -> List.of("java", codeFile.getAbsolutePath());
-            case "C" -> List.of("docker", "run", "--cidfile", /*"--pids-limit=64", "--memory=256m", "--cpus=0.5",*/ Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
+            case "C" -> List.of("docker", "run", "--cidfile", Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
             default -> throw new IllegalStateException("Unexpected value: " + language);
         };
     }
@@ -140,6 +140,7 @@ public class CodeSubmission {
 
     public void closeRun(File dirFile, CodeExecution exec, String newStatus) {
         exec.exitStatus += newStatus;
+        //TODO: Remove unnecessary print statements here
         //Print out latest output for now for testing purposes
         System.out.println("====OUT:\n" + exec.output);
         //Print out latest error for testing purposes
@@ -267,6 +268,8 @@ public class CodeSubmission {
                 System.out.println("Waited for thread.");
             } catch (IOException | InterruptedException e) {
                 exec.exitStatus += "Code failed to exit.\n";
+                System.out.println("Failure here");
+                e.printStackTrace();
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException ex) {
