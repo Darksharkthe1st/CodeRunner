@@ -263,16 +263,14 @@ public class CodeSubmission {
             try {
                 //Get the file where the docker id is stored and
                 File dockerFile = new File(dirFile, "cidfile.txt");
-                String dockerId = Files.readAllLines(dockerFile.toPath()).get(0);
-                builder.command("docker", "stop", dockerId, "||", "docker", "kill", dockerId);
-                builder.start();
+                String dockerId = Files.readAllLines(dockerFile.toPath()).getFirst();
 
-                //Block this thread until the process is dead
-                builder.command("docker", "wait", dockerId);
-                Process waiter = builder.start();
-                waiter.waitFor(Duration.ofSeconds(5));
+                // Stop and remove the container, wait until fully removed
+                builder.command("docker", "rm", "-f", dockerId);
+                Process removal = builder.start();
+                removal.waitFor(); // This blocks until removal completes
 
-                if (waiter.isAlive()) {
+                if (removal.isAlive()) {
                     exec.exitStatus += "Failed to close docker container\n";
                 }
                 System.out.println("Waited for thread.");
