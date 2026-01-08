@@ -43,7 +43,7 @@ public class CodeSubmission {
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile) {
         return switch (language) {
             case "Java" -> List.of("java", codeFile.getAbsolutePath());
-            case "C" -> List.of("docker", "run", "--cidfile", /*"--pids-limit=64", "--memory=256m", "--cpus=0.5",*/ Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc-buildonly", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
+            case "C" -> List.of("docker", "run", "--cidfile", /*"--pids-limit=64", "--memory=256m", "--cpus=0.5",*/ Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox", "gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
             default -> throw new IllegalStateException("Unexpected value: " + language);
         };
     }
@@ -141,11 +141,10 @@ public class CodeSubmission {
     public void closeRun(File dirFile, CodeExecution exec, String newStatus) {
         exec.exitStatus += newStatus;
         //Print out latest output for now for testing purposes
-        System.out.println("OUT:\n" + exec.output);
+        System.out.println("====OUT:\n" + exec.output);
         //Print out latest error for testing purposes
-        System.out.println("ERR:\n" + exec.error);
+        System.out.println("====ERR:\n" + exec.error);
 
-        System.out.println("YO WE HERE GNG");
         //Delete temporary files, if possible
         try {
             FileUtils.cleanDirectory(dirFile);
@@ -175,8 +174,6 @@ public class CodeSubmission {
      * @throws InterruptedException for thread.sleep calls on the main process (Spring Boot server)
      */
     public void runProcess(Process process, ProcessBuilder builder, CodeExecution exec, String language, File dirFile) {
-        System.out.println("Process ran0.");
-
         //Use BufferedReader/StringBuilder to store outputs
         BufferedReader errorBuffer = process.errorReader();
         BufferedReader outputBuffer = process.inputReader();
@@ -228,8 +225,6 @@ public class CodeSubmission {
             }
         };
 
-        System.out.println("Process ran1.");
-
         //Begin reading stdout
         readOut.start();
         readErr.start();
@@ -241,14 +236,10 @@ public class CodeSubmission {
             exec.exitStatus += "Failed to poll program\n";
         }
 
-        System.out.println("Process ran2.");
-
         //Time limit exceeded
         if (process.isAlive()) {
             exec.exitStatus += "Time Limit Exceeded.\n";
         }
-
-        System.out.println("Process ran3.");
 
         if (language.equals("Java")) {
 
@@ -284,8 +275,6 @@ public class CodeSubmission {
             }
         }
 
-        System.out.println("Process ran4.");
-
         //If the process exited improperly and an error wasn't caught, note it
         if (process.exitValue() != 0 && exec.exitStatus.equals("success")) {
             exec.exitStatus += "Program exited with incorrect return value: " + process.exitValue() + "\n";
@@ -300,9 +289,6 @@ public class CodeSubmission {
         } catch (InterruptedException | IOException e) {
             exec.exitStatus += "Failed to read stdout/stderr.\n";
         }
-
-
-        System.out.println("Process ran4.");
 
         //Show the user the error message if it comes up
         if (!exec.exitStatus.isEmpty()) {
