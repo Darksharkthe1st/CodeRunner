@@ -45,14 +45,15 @@ public class CodeSubmission {
         List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--cidfile", Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
         cmds.addAll(switch (language) {
             case "C" -> List.of("gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
-            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "\"python3 sandbox/" + codeFile.getName() + "\"");
-            default -> List.of();
+            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "\"python3 sandbox/" + codeFile.getName() + "w\"");
+            case "Java" -> List.of("eclipse-temurin:21-alpine-3.23", "java", "sandbox/" + codeFile.getName());
+            default -> List.of("FAILURE");
         });
-        return switch (language) {
-            case "Java" -> List.of("java", codeFile.getAbsolutePath());
-            case "C", "Python", "CPP" -> cmds;
-            default -> throw new IllegalStateException("Unexpected value: " + language);
-        };
+        if (cmds.getLast().equals("FAILURE")) {
+            return null;
+        } else {
+            return cmds;
+        }
     }
 
     public File build(ProcessBuilder processBuilder, CodeExecution exec) {
