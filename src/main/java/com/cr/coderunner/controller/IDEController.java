@@ -3,13 +3,10 @@ package com.cr.coderunner.controller;
 import com.cr.coderunner.dto.RunResult;
 import com.cr.coderunner.model.CodeExecution;
 import com.cr.coderunner.model.CodeSubmission;
-import com.cr.coderunner.model.Problem;
 import com.cr.coderunner.model.UserData;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Map;
 
 @RestController
 public class IDEController {
@@ -62,5 +59,34 @@ public class IDEController {
             default -> throw new IllegalStateException("Unexpected value: " + language);
         };
     }
-    
+
+
+    //Logging setup (Via web requests)
+    private static boolean loggerOn = false;
+    private static volatile boolean waiting = false;
+
+    public static void logText(String text) {
+        if (!loggerOn)
+            return;
+
+        System.out.println("LOG (Press enter to continue): " + text);
+        waiting = true;
+
+        //Busy wait until unpaused by postman
+        while (waiting) {
+            Thread.onSpinWait();
+        }
+
+    }
+
+    @PostMapping("/set_logging")
+    public void setLogging(@RequestParam boolean loggingOn) {
+        loggerOn = loggingOn;
+    }
+
+    @PostMapping("/resume")
+    public void resume() {
+        waiting = false;
+    }
+
 }

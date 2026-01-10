@@ -1,5 +1,6 @@
 package com.cr.coderunner.model;
 
+import com.cr.coderunner.controller.IDEController;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
@@ -9,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -44,9 +46,9 @@ public class CodeSubmission {
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile, File inputFile) {
         List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--cidfile", Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
         cmds.addAll(switch (language) {
-            case "C" -> List.of("gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName() + "\"");
-            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "\"python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName()  + "\"");
-            case "Java" -> List.of("eclipse-temurin:21-alpine-3.23", "sh", "-c", "\"java sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName() + "\"");
+            case "C" -> List.of("gcc:13-bookworm", "bash", "-lc", "gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName());
+            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
+            case "Java" -> List.of("eclipse-temurin:21-alpine-3.23", "sh", "-c", "java sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
             default -> List.of("FAILURE");
         });
         if (cmds.getLast().equals("FAILURE")) {
@@ -68,7 +70,7 @@ public class CodeSubmission {
 
         //Make a new directory if needed
         if (execDir.mkdir())
-            System.out.println("testing directory not detected; new directory created.");
+            IDEController.logText("testing directory not detected; new directory created.");
 
         //Files for code/input to be pulled from
         File dirFile, codeFile, inputFile;
@@ -78,9 +80,11 @@ public class CodeSubmission {
             Path tempDir = Files.createTempDirectory(execDir.toPath(),"run");
 
             //Create temporary code/input files with an appropriate filename
-            codeFile = Files.createTempFile(tempDir,"code-", "." + extension).toFile();
+            codeFile = Files.createTempFile(tempDir,"code-", extension).toFile();
             inputFile = Files.createTempFile(tempDir,"input-", ".txt").toFile();
             dirFile = new File(tempDir.toUri());
+
+            IDEController.logText("Files made.");
 
             //Ensure files are temporary only
             codeFile.deleteOnExit();
@@ -100,6 +104,7 @@ public class CodeSubmission {
 //        processBuilder.redirectInput(inputFile);
         processBuilder.directory(execDir);
 
+        IDEController.logText("Running code on enter.");
         //Run different execution methods for different languages
         processBuilder.command(getCommandByFiles(language, codeFile, dirFile, inputFile));
 
@@ -148,11 +153,11 @@ public class CodeSubmission {
 
     public void closeRun(File dirFile, CodeExecution exec, String newStatus) {
         exec.exitStatus += newStatus;
-        //TODO: Remove unnecessary print statements here
+        //TODO: Remove unnecessary log statements here
         //Print out latest output for now for testing purposes
-        System.out.println("====OUT:\n" + exec.output);
+        IDEController.logText("====OUT:\n" + exec.output);
         //Print out latest error for testing purposes
-        System.out.println("====ERR:\n" + exec.error);
+        IDEController.logText("====ERR:\n" + exec.error);
 
         //Delete temporary files, if possible
         try {
@@ -250,44 +255,37 @@ public class CodeSubmission {
             exec.exitStatus += "Time Limit Exceeded.\n";
         }
 
-        if (language.equals("Java")) {
+        try {
+            //Get the file where the docker id is stored and
+            File dockerFile = new File(dirFile, "cidfile.txt");
+            String dockerId = Files.readAllLines(dockerFile.toPath()).getFirst();
 
-            try {
-                //Kill the process no matter what to avoid any rogue processes
-                process.destroy();
-            } catch (IllegalThreadStateException e) {
-                //If the process cannot be destroyed normally, forcibly kill it
-                process.destroyForcibly();
+            // Stop and remove the container, wait until fully removed
+            builder.command("docker", "rm", "-f", dockerId);
+            Process removal = builder.start();
+            removal.waitFor(); // This blocks until removal completes
+
+            if (removal.isAlive()) {
+                exec.exitStatus += "Failed to close docker container\n";
             }
-        } else if (language.equals("C")) {
+            IDEController.logText("Waited for thread.");
+        } catch (IOException | InterruptedException e) {
+            exec.exitStatus += "Code failed to exit.\n";
+            IDEController.logText("Failure here");
+            e.printStackTrace();
             try {
-                //Get the file where the docker id is stored and
-                File dockerFile = new File(dirFile, "cidfile.txt");
-                String dockerId = Files.readAllLines(dockerFile.toPath()).getFirst();
-
-                // Stop and remove the container, wait until fully removed
-                builder.command("docker", "rm", "-f", dockerId);
-                Process removal = builder.start();
-                removal.waitFor(); // This blocks until removal completes
-
-                if (removal.isAlive()) {
-                    exec.exitStatus += "Failed to close docker container\n";
-                }
-                System.out.println("Waited for thread.");
-            } catch (IOException | InterruptedException e) {
-                exec.exitStatus += "Code failed to exit.\n";
-                System.out.println("Failure here");
-                e.printStackTrace();
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    throw new RuntimeException(ex);
-                }
+                Thread.sleep(200);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
             }
         }
 
+        IDEController.logText("Processes killed.");
+
         //If the process exited improperly and an error wasn't caught, note it
-        if (process.exitValue() != 0 && exec.exitStatus.equals("success")) {
+        if (process.isAlive()) {
+            exec.exitStatus += "Process has not exited properly.\n";
+        } else if (process.exitValue() != 0 && exec.exitStatus.equals("success")) {
             exec.exitStatus += "Program exited with incorrect return value: " + process.exitValue() + "\n";
         }
 
