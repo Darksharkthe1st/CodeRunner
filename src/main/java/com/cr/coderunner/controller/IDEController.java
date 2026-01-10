@@ -54,7 +54,7 @@ public class IDEController {
     public String getTemplate(@RequestParam String language) {
         return switch (language) {
             case "Java" -> "class test {\n\tpublic static void main(String[] args) {\n\t\t\n\t}\n}";
-            case "C", "C++" -> "#include <stdio.h>\n\nint main(int argc, char *argv[]) {\n\t\n}";
+            case "C", "C++" -> "#include <stdio.h>\n\nint main(int argc, char *argv[]) {\n\t\n\treturn 0;\n}";
             case "Python" -> "if __name__ == \"__main__\":\n\tpass\n";
             default -> throw new IllegalStateException("Unexpected value: " + language);
         };
