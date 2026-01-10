@@ -41,12 +41,12 @@ public class CodeSubmission {
         };
     }
 
-    public List<String> getCommandByFiles(String language, File codeFile, File dirFile) {
+    public List<String> getCommandByFiles(String language, File codeFile, File dirFile, File inputFile) {
         List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--cidfile", Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
         cmds.addAll(switch (language) {
-            case "C" -> List.of("gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main\"");
-            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "\"python3 sandbox/" + codeFile.getName() + "w\"");
-            case "Java" -> List.of("eclipse-temurin:21-alpine-3.23", "java", "sandbox/" + codeFile.getName());
+            case "C" -> List.of("gcc:13-bookworm", "bash", "-lc", "\"gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName() + "\"");
+            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "\"python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName()  + "\"");
+            case "Java" -> List.of("eclipse-temurin:21-alpine-3.23", "sh", "-c", "\"java sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName() + "\"");
             default -> List.of("FAILURE");
         });
         if (cmds.getLast().equals("FAILURE")) {
@@ -97,11 +97,11 @@ public class CodeSubmission {
             return null;
         }
 
-        processBuilder.redirectInput(inputFile);
+//        processBuilder.redirectInput(inputFile);
         processBuilder.directory(execDir);
 
         //Run different execution methods for different languages
-        processBuilder.command(getCommandByFiles(language, codeFile, dirFile));
+        processBuilder.command(getCommandByFiles(language, codeFile, dirFile, inputFile));
 
         return dirFile;
     }

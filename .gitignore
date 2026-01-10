@@ -30,3 +30,4 @@ replay_pid*
 /target/maven-status
 /target/surefire-reports
 CLAUDE.md
+/target
