@@ -40,13 +40,12 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-# Pre-pull images for faster execution
-echo "Pre-pulling Docker images..."
-docker pull eclipse-temurin:21-alpine-3.23 || echo "Warning: Failed to pull openjdk image"
-docker pull python:3.12-slim-bookworm || echo "Warning: Failed to pull python image"
-docker pull gcc:13-bookworm || echo "Warning: Failed to pull gcc image"
-
+echo "Pre-pulling docker images..."
+docker pull eclipse-temurin:21-alpine
+docker pull python:3.12-alpine
+docker pull alpine:latest
 echo "All images pulled successfully!"
+
 echo "Starting Spring Boot application..."
 
 # Start Spring Boot app

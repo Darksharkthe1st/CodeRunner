@@ -12,6 +12,7 @@ import java.io.IOException;
 public class IDEController {
     //TODO: Switch from use of userData class to SQL-Based dataset
     private final UserData userData;
+    private static final String[] supported_langs = new String[] {"Java", "C", "Python"};
 
     public IDEController(UserData userData) {
         this.userData = userData;
@@ -19,7 +20,7 @@ public class IDEController {
 
     @GetMapping("/supported")
     public String[] getSupported() {
-        return new String[] {"Java", "C"};
+        return supported_langs;
     }
 
     @GetMapping("/")
@@ -60,9 +61,31 @@ public class IDEController {
         };
     }
 
+    @GetMapping("/pull")
+    public String pullImages() throws IOException, InterruptedException {
+        //Builder and images to be pulled
+        ProcessBuilder builder = new ProcessBuilder();
+        String[] images = new String[] {"gcc:13-bookworm", "python:3.12-slim-bookworm", "eclipse-temurin:21-alpine-3.23"};
+        //Pull every image needed
+        for (String image : images) {
+            //Pull cmd
+            builder.command("docker", "pull", image);
+            //Start and wait for the process
+            builder.inheritIO();
+            Process pulling = builder.start();
+            pulling.waitFor();
+            //Fail if the process couldn't exit
+            if (pulling.isAlive()) return "Failure";
+        }
+
+        //Success if all pulls exited.
+        return "Success!";
+    }
+
 
     //Logging setup (Via web requests)
     private static boolean loggerOn = false;
+    private static boolean pauserOn = false;
     private static volatile boolean waiting = false;
 
     public static void logText(String text) {
@@ -71,10 +94,11 @@ public class IDEController {
 
         System.out.println("LOG (Press enter to continue): " + text);
         waiting = true;
-
-        //Busy wait until unpaused by postman
-        while (waiting) {
-            Thread.onSpinWait();
+        if (pauserOn) {
+            //Busy wait until unpaused by postman
+            while (waiting) {
+                Thread.onSpinWait();
+            }
         }
 
     }
@@ -82,6 +106,11 @@ public class IDEController {
     @PostMapping("/set_logging")
     public void setLogging(@RequestParam boolean loggingOn) {
         loggerOn = loggingOn;
+    }
+
+    @PostMapping("/set_pausing")
+    public void setPausingOn(@RequestParam boolean pausingOn) {
+        pauserOn = pausingOn;
     }
 
     @PostMapping("/resume")

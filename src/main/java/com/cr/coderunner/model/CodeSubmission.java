@@ -44,11 +44,11 @@ public class CodeSubmission {
     }
 
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile, File inputFile) {
-        List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--cidfile", Path.of(dirFile.getPath(), "cidfile.txt").toString(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
+        List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--name", dirFile.getName(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
         cmds.addAll(switch (language) {
-            case "C" -> List.of("gcc:13-bookworm", "bash", "-lc", "gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName());
-            case "Python" -> List.of("python:3.12-slim-bookworm", "bash", "-lc", "python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
-            case "Java" -> List.of("eclipse-temurin:21-alpine-3.23", "sh", "-c", "java sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
+            case "C" -> List.of("alpine:latest", "sh", "-c", "apk add --no-cache gcc musl-dev > none.txt && " + "gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName());
+            case "Python" -> List.of("python:3.12-alpine", "sh", "-c", "python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
+            case "Java" -> List.of("eclipse-temurin:21-alpine", "sh", "-c", "java sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
             default -> List.of("FAILURE");
         });
         if (cmds.getLast().equals("FAILURE")) {
@@ -245,7 +245,7 @@ public class CodeSubmission {
 
         //wait for the process to finish
         try {
-            process.waitFor(TIME_LIMIT_SECS, TimeUnit.SECONDS);
+            process.waitFor(60, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             exec.exitStatus += "Failed to poll program\n";
         }
@@ -256,12 +256,8 @@ public class CodeSubmission {
         }
 
         try {
-            //Get the file where the docker id is stored and
-            File dockerFile = new File(dirFile, "cidfile.txt");
-            String dockerId = Files.readAllLines(dockerFile.toPath()).getFirst();
-
-            // Stop and remove the container, wait until fully removed
-            builder.command("docker", "rm", "-f", dockerId);
+            // Stop and remove the container by name (dirFile => container name), wait until fully removed
+            builder.command("docker", "rm", "-f", dirFile.getName());
             Process removal = builder.start();
             removal.waitFor(); // This blocks until removal completes
 

@@ -27,6 +27,11 @@ RUN apk add --no-cache openjdk21-jre
 ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
+
+# Test if shell commands work at all
+RUN echo "test" && ls -la
+
+
 WORKDIR /app
 
 # Copy the built jar
