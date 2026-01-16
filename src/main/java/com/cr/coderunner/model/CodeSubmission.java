@@ -175,6 +175,10 @@ public class CodeSubmission {
             return;
         }
 
+        if (!exec.error.isEmpty()) {
+            exec.exitStatus += "Execution errors detected; see stderr.\n";
+        }
+
         //Set success to true/false depending on status
         exec.success = exec.exitStatus.isEmpty();
         if (exec.success)

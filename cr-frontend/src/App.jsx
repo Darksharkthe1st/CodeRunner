@@ -1,6 +1,7 @@
 import './App.css'
 import CodeEditor from './components/CodeEditor'
 import Terminal from './components/Terminal'
+import Alert from './components/Alert'
 import { useState, useEffect } from 'react'
 
 const SUPPORTED_LANGUAGES = ["C", "C++", "Java", "Python"]
@@ -8,9 +9,11 @@ const SUPPORTED_LANGUAGES = ["C", "C++", "Java", "Python"]
 function App() {
   const [text, setText] = useState('')
   const [response, setResponse] = useState('')
+  const [runData, setRunData] = useState(null)
   const [selectedLanguage, setSelectedLanguage] = useState('C')
   const [darkMode, setDarkMode] = useState(false)
   const [fontSize, setFontSize] = useState(14)
+  const [alertData, setAlertData] = useState({ show: false, success: false, exitStatus: '' })
 
   useEffect(() => {
     const fetchTemplate = async () => {
@@ -58,11 +61,29 @@ function App() {
         })
       })
 
-      const runData = await runRes.json()
-      setResponse(JSON.stringify(runData, null, 2))
-      console.log('Run Response:', runData)
+      const data = await runRes.json()
+
+      // Store the run data for Terminal component
+      setRunData(data)
+      setResponse('') // Clear plain text response
+
+      // Show alert with exit status
+      setAlertData({
+        show: true,
+        success: data.success,
+        exitStatus: data.exitStatus || (data.success ? 'Execution completed successfully' : 'Execution failed')
+      })
+
+      console.log('Run Response:', data)
     } catch (error) {
-      setResponse(`Error: ${error.message}`)
+      // For network errors, display as plain text
+      setRunData(null)
+      setResponse(`> Error\n=====================================\n\n${error.message}`)
+      setAlertData({
+        show: true,
+        success: false,
+        exitStatus: `Network Error: ${error.message}`
+      })
       console.error('Error:', error)
     }
   }
@@ -75,6 +96,10 @@ function App() {
     setFontSize(prev => Math.max(prev - 2, 8))
   }
 
+  const handleCloseAlert = () => {
+    setAlertData({ show: false, success: false, exitStatus: '' })
+  }
+
   return (
     <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-black' : 'bg-gray-100'}`}>
       {/* Header */}
@@ -83,7 +108,7 @@ function App() {
           <h1 className={`text-2xl font-bold tracking-wider ${darkMode ? 'text-green-400' : 'text-green-500'}`}>
             {'>'} CODE_RUNNER
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative">
             <button
               onClick={zoomOut}
               className={`w-10 h-10 border-2 ${darkMode ? 'border-green-500 text-green-400 hover:bg-green-500 hover:bg-opacity-10' : 'border-green-400 text-green-500 hover:bg-green-400 hover:bg-opacity-10'} transition-colors font-mono text-xl font-bold flex items-center justify-center`}
@@ -115,12 +140,22 @@ function App() {
                 </option>
               ))}
             </select>
-            <button
-              onClick={handleSubmit}
-              className={`h-10 px-6 border-2 ${darkMode ? 'border-green-500 bg-green-500 bg-opacity-10 text-green-400 hover:bg-opacity-20' : 'border-green-400 bg-green-400 bg-opacity-10 text-green-500 hover:bg-opacity-20'} transition-colors font-semibold font-mono tracking-wider`}
-            >
-              [RUN]
-            </button>
+            <div className="relative">
+              <button
+                onClick={handleSubmit}
+                className={`h-10 px-6 border-2 ${darkMode ? 'border-green-500 bg-green-500 bg-opacity-10 text-green-400 hover:bg-opacity-20' : 'border-green-400 bg-green-400 bg-opacity-10 text-green-500 hover:bg-opacity-20'} transition-colors font-semibold font-mono tracking-wider`}
+              >
+                [RUN]
+              </button>
+              {alertData.show && (
+                <Alert
+                  success={alertData.success}
+                  exitStatus={alertData.exitStatus}
+                  onClose={handleCloseAlert}
+                  darkMode={darkMode}
+                />
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -150,7 +185,7 @@ function App() {
             </h2>
           </div>
           <div className="flex-1">
-            <Terminal output={response} darkMode={darkMode} fontSize={fontSize} />
+            <Terminal output={response} darkMode={darkMode} fontSize={fontSize} runData={runData} />
           </div>
         </div>
 

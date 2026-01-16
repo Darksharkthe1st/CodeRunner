@@ -65,7 +65,7 @@ public class IDEController {
     public String pullImages() throws IOException, InterruptedException {
         //Builder and images to be pulled
         ProcessBuilder builder = new ProcessBuilder();
-        String[] images = new String[] {"gcc:13-bookworm", "python:3.12-slim-bookworm", "eclipse-temurin:21-alpine-3.23"};
+        String[] images = new String[] {"alpine:latest", "python:3.12-alpine", "eclipse-temurin:21-alpine"};
         //Pull every image needed
         for (String image : images) {
             //Pull cmd

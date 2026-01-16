@@ -1,4 +1,5 @@
 import Editor from '@monaco-editor/react'
+import { hackerGreenDark, hackerGreenLight } from '../themes/monacoTheme'
 
 function CodeEditor({ code, setCode, darkMode, language, fontSize }) {
   // Map our language names to Monaco language identifiers
@@ -12,6 +13,12 @@ function CodeEditor({ code, setCode, darkMode, language, fontSize }) {
     return languageMap[lang] || 'plaintext'
   }
 
+  // Register custom themes before Monaco mounts
+  const handleEditorWillMount = (monaco) => {
+    monaco.editor.defineTheme('hacker-green-dark', hackerGreenDark)
+    monaco.editor.defineTheme('hacker-green-light', hackerGreenLight)
+  }
+
   return (
     <div className={`w-full h-full border-2 overflow-hidden ${
       darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
@@ -21,7 +28,8 @@ function CodeEditor({ code, setCode, darkMode, language, fontSize }) {
         language={getMonacoLanguage(language)}
         value={code}
         onChange={(value) => setCode(value || '')}
-        theme={darkMode ? 'vs-dark' : 'vs-light'}
+        beforeMount={handleEditorWillMount}
+        theme={darkMode ? 'hacker-green-dark' : 'hacker-green-light'}
         options={{
           minimap: { enabled: false },
           fontSize: fontSize,
