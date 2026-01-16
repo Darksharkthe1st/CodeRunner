@@ -1,5 +1,6 @@
 import './App.css'
-import TextWindow from './components/TextWindow'
+import CodeEditor from './components/CodeEditor'
+import Terminal from './components/Terminal'
 import { useState, useEffect } from 'react'
 
 const SUPPORTED_LANGUAGES = ["C", "C++", "Java", "Python"]
@@ -9,6 +10,7 @@ function App() {
   const [response, setResponse] = useState('')
   const [selectedLanguage, setSelectedLanguage] = useState('C')
   const [darkMode, setDarkMode] = useState(false)
+  const [fontSize, setFontSize] = useState(14)
 
   useEffect(() => {
     const fetchTemplate = async () => {
@@ -65,35 +67,59 @@ function App() {
     }
   }
 
+  const zoomIn = () => {
+    setFontSize(prev => Math.min(prev + 2, 32))
+  }
+
+  const zoomOut = () => {
+    setFontSize(prev => Math.max(prev - 2, 8))
+  }
+
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-black' : 'bg-gray-100'}`}>
       {/* Header */}
-      <header className={`${darkMode ? 'bg-gray-800' : 'bg-blue-600'} text-white p-4 shadow-lg`}>
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Code Runner</h1>
-          <div className="flex items-center gap-4">
+      <header className={`${darkMode ? 'bg-gray-950 border-b-2 border-green-500' : 'bg-gray-900 border-b-2 border-green-400'} text-white p-4 shadow-xl`}>
+        <div className="flex justify-between items-center px-4">
+          <h1 className={`text-2xl font-bold tracking-wider ${darkMode ? 'text-green-400' : 'text-green-500'}`}>
+            {'>'} CODE_RUNNER
+          </h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={zoomOut}
+              className={`w-10 h-10 border-2 ${darkMode ? 'border-green-500 text-green-400 hover:bg-green-500 hover:bg-opacity-10' : 'border-green-400 text-green-500 hover:bg-green-400 hover:bg-opacity-10'} transition-colors font-mono text-xl font-bold flex items-center justify-center`}
+              title="Zoom Out"
+            >
+              -
+            </button>
+            <button
+              onClick={zoomIn}
+              className={`w-10 h-10 border-2 ${darkMode ? 'border-green-500 text-green-400 hover:bg-green-500 hover:bg-opacity-10' : 'border-green-400 text-green-500 hover:bg-green-400 hover:bg-opacity-10'} transition-colors font-mono text-xl font-bold flex items-center justify-center`}
+              title="Zoom In"
+            >
+              +
+            </button>
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
+              className={`h-10 px-4 border-2 ${darkMode ? 'border-green-500 text-green-400 hover:bg-green-500 hover:bg-opacity-10' : 'border-green-400 text-green-500 hover:bg-green-400 hover:bg-opacity-10'} transition-colors font-mono`}
             >
-              {darkMode ? '☀️' : '🌙'}
+              {darkMode ? '[LIGHT]' : '[DARK]'}
             </button>
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className={`px-4 py-2 border-2 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-white bg-blue-500'} text-white rounded-lg focus:outline-none focus:border-blue-300`}
+              className={`h-10 px-4 border-2 ${darkMode ? 'border-green-500 bg-black text-green-400' : 'border-green-400 bg-gray-900 text-green-500'} focus:outline-none focus:ring-2 focus:ring-green-500 font-mono`}
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
+                <option key={lang} value={lang} className="bg-black">
                   {lang}
                 </option>
               ))}
             </select>
             <button
               onClick={handleSubmit}
-              className={`px-6 py-2 ${darkMode ? 'bg-blue-500 hover:bg-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50'} rounded-lg transition-colors font-semibold`}
+              className={`h-10 px-6 border-2 ${darkMode ? 'border-green-500 bg-green-500 bg-opacity-10 text-green-400 hover:bg-opacity-20' : 'border-green-400 bg-green-400 bg-opacity-10 text-green-500 hover:bg-opacity-20'} transition-colors font-semibold font-mono tracking-wider`}
             >
-              Submit
+              [RUN]
             </button>
           </div>
         </div>
@@ -102,27 +128,30 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 grid grid-cols-2 gap-4 p-4">
 
-        {/* Left Side - Input Box */}
+        {/* Left Side - Code Editor */}
         <div className="flex flex-col">
-          <h2 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Code</h2>
+          <div className={`flex items-center gap-2 mb-2 pb-2 border-b-2 ${darkMode ? 'border-green-500' : 'border-green-400'}`}>
+            <span className={`text-lg font-bold font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{'>'}</span>
+            <h2 className={`text-lg font-semibold font-mono tracking-wide ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+              EDITOR
+            </h2>
+          </div>
           <div className="flex-1">
-            <TextWindow text={text} setText={setText} darkMode={darkMode} language={selectedLanguage} />
+            <CodeEditor code={text} setCode={setText} darkMode={darkMode} language={selectedLanguage} fontSize={fontSize} />
           </div>
         </div>
 
-        {/* Right Side - Result Box */}
+        {/* Right Side - Terminal Output */}
         <div className="flex flex-col">
-          <h2 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Output</h2>
-          <textarea
-            value={response}
-            readOnly
-            className={`flex-1 p-4 border-2 rounded-2xl resize-none font-mono text-sm ${
-              darkMode
-                ? 'bg-gray-800 border-gray-600 text-gray-100'
-                : 'bg-gray-50 border-gray-300 text-gray-900'
-            }`}
-            placeholder="Results will appear here..."
-          />
+          <div className={`flex items-center gap-2 mb-2 pb-2 border-b-2 ${darkMode ? 'border-green-500' : 'border-green-400'}`}>
+            <span className={`text-lg font-bold font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{'>'}</span>
+            <h2 className={`text-lg font-semibold font-mono tracking-wide ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+              TERMINAL
+            </h2>
+          </div>
+          <div className="flex-1">
+            <Terminal output={response} darkMode={darkMode} fontSize={fontSize} />
+          </div>
         </div>
 
 
