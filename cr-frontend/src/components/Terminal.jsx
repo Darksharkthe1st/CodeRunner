@@ -1,15 +1,26 @@
 import ExecutingAnimation from './ExecutingAnimation'
 
 function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
+  // Custom scrollbar styles
+  const scrollbarStyle = {
+    scrollbarWidth: 'thin',
+    scrollbarColor: darkMode ? '#00FF00 #000000' : '#00CC00 #1a1a1a',
+  }
+
+  const scrollbarWebkitClass = darkMode ? 'terminal-scrollbar-dark' : 'terminal-scrollbar-light'
+
   // Show executing animation when code is running
   if (isExecuting) {
     return (
       <div className={`w-full h-full border-2 overflow-hidden ${
         darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
       }`}>
-        <div className={`w-full h-full overflow-auto ${
-          darkMode ? 'bg-black' : 'bg-gray-900'
-        }`}>
+        <div
+          className={`w-full h-full overflow-auto ${
+            darkMode ? 'bg-black' : 'bg-gray-900'
+          } ${scrollbarWebkitClass}`}
+          style={scrollbarStyle}
+        >
           <ExecutingAnimation darkMode={darkMode} fontSize={fontSize} />
         </div>
       </div>
@@ -22,9 +33,12 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
       <div className={`w-full h-full border-2 overflow-hidden ${
         darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
       }`}>
-        <div className={`w-full h-full overflow-auto ${
-          darkMode ? 'bg-black' : 'bg-gray-900'
-        }`}>
+        <div
+          className={`w-full h-full overflow-auto ${
+            darkMode ? 'bg-black' : 'bg-gray-900'
+          } ${scrollbarWebkitClass}`}
+          style={scrollbarStyle}
+        >
           <div className="p-4 font-mono" style={{ fontSize: `${fontSize}px` }}>
             <div className={darkMode ? 'text-green-400' : 'text-green-500'}>
               {'> Execution Result'}
@@ -107,9 +121,12 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
     <div className={`w-full h-full border-2 overflow-hidden ${
       darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
     }`}>
-      <div className={`w-full h-full overflow-auto ${
-        darkMode ? 'bg-black' : 'bg-gray-900'
-      }`}>
+      <div
+        className={`w-full h-full overflow-auto ${
+          darkMode ? 'bg-black' : 'bg-gray-900'
+        } ${scrollbarWebkitClass}`}
+        style={scrollbarStyle}
+      >
         <div
           className={`p-4 font-mono whitespace-pre-wrap ${
             darkMode ? 'text-green-400' : 'text-green-500'

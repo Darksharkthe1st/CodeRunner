@@ -209,30 +209,30 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 grid grid-cols-2 gap-4 p-4">
+      <div className="flex-1 grid grid-cols-2 gap-4 p-4 min-h-0">
 
         {/* Left Side - Code Editor */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-h-0">
           <div className={`flex items-center gap-2 mb-2 pb-2 border-b-2 ${darkMode ? 'border-green-500' : 'border-green-400'}`}>
             <span className={`text-lg font-bold font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{'>'}</span>
             <h2 className={`text-lg font-semibold font-mono tracking-wide ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
               EDITOR
             </h2>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-h-0">
             <CodeEditor code={text} setCode={setText} darkMode={darkMode} language={selectedLanguage} fontSize={fontSize} />
           </div>
         </div>
 
         {/* Right Side - Terminal Output */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-h-0">
           <div className={`flex items-center gap-2 mb-2 pb-2 border-b-2 ${darkMode ? 'border-green-500' : 'border-green-400'}`}>
             <span className={`text-lg font-bold font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{'>'}</span>
             <h2 className={`text-lg font-semibold font-mono tracking-wide ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
               TERMINAL
             </h2>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-h-0">
             <Terminal output={response} darkMode={darkMode} fontSize={fontSize} runData={runData} isExecuting={isExecuting} />
           </div>
         </div>
