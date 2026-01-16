@@ -25,7 +25,7 @@ A full-stack web-based IDE that allows users to write, compile, and execute code
 ### Backend
 - **Spring Boot 4.0.1** - REST API framework
 - **Java 21** - Backend runtime
-- **Docker** - Containerized code execution (gcc:13-bookworm for C/C++)
+- **Docker** - Containerized code execution
 - **Maven** - Build and dependency management
 
 ## Architecture
