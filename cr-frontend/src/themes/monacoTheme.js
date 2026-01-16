@@ -1,59 +1,109 @@
-// Hacker Green theme for Monaco Editor
+// Neon Cyberpunk theme for Monaco Editor - Blue, Green, Orange, Yellow color scheme
 export const hackerGreenDark = {
   base: 'vs-dark',
   inherit: true,
   rules: [
-    { token: '', foreground: '00ff00', background: '000000' },
-    { token: 'comment', foreground: '008800', fontStyle: 'italic' },
-    { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' },
-    { token: 'operator', foreground: '00ff00' },
-    { token: 'namespace', foreground: '00cc00' },
-    { token: 'type', foreground: '00ff88' },
-    { token: 'struct', foreground: '00ff88' },
-    { token: 'class', foreground: '00ff88' },
-    { token: 'interface', foreground: '00ff88' },
-    { token: 'enum', foreground: '00ff88' },
-    { token: 'typeParameter', foreground: '00ff88' },
-    { token: 'function', foreground: '00ffcc' },
-    { token: 'member', foreground: '00ffcc' },
-    { token: 'macro', foreground: '00ffcc' },
-    { token: 'variable', foreground: '88ff88' },
-    { token: 'parameter', foreground: '88ff88' },
-    { token: 'property', foreground: '88ff88' },
-    { token: 'label', foreground: '88ff88' },
-    { token: 'string', foreground: '66ff66' },
-    { token: 'string.escape', foreground: '00ff00', fontStyle: 'bold' },
-    { token: 'number', foreground: '00ff99' },
-    { token: 'regexp', foreground: '00ffaa' },
-    { token: 'delimiter', foreground: '00ff00' },
-    { token: 'tag', foreground: '00ff00' },
-    { token: 'annotation', foreground: '00cc00' },
-    { token: 'decorator', foreground: '00cc00' },
-    { token: 'attribute', foreground: '00ff88' },
-    { token: 'constant', foreground: '00ff99', fontStyle: 'bold' },
-    { token: 'identifier', foreground: '88ff88' },
+    // Base text
+    { token: '', foreground: '00FF00', background: '000000' },
+
+    // Comments - dim green
+    { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+    { token: 'comment.line', foreground: '6A9955', fontStyle: 'italic' },
+    { token: 'comment.block', foreground: '6A9955', fontStyle: 'italic' },
+
+    // Keywords - neon blue
+    { token: 'keyword', foreground: '00BFFF', fontStyle: 'bold' },
+    { token: 'keyword.control', foreground: '00BFFF', fontStyle: 'bold' },
+    { token: 'keyword.operator', foreground: '00BFFF' },
+    { token: 'storage', foreground: '00BFFF', fontStyle: 'bold' },
+    { token: 'storage.type', foreground: '00BFFF', fontStyle: 'bold' },
+
+    // Operators - electric blue
+    { token: 'operator', foreground: '00D4FF' },
+    { token: 'delimiter', foreground: '00D4FF' },
+    { token: 'delimiter.bracket', foreground: '00D4FF' },
+    { token: 'delimiter.parenthesis', foreground: '00D4FF' },
+
+    // Types and Classes - bright neon blue
+    { token: 'type', foreground: '0099FF' },
+    { token: 'type.identifier', foreground: '0099FF' },
+    { token: 'class', foreground: '0099FF', fontStyle: 'bold' },
+    { token: 'class.name', foreground: '0099FF', fontStyle: 'bold' },
+    { token: 'struct', foreground: '0099FF', fontStyle: 'bold' },
+    { token: 'interface', foreground: '0099FF', fontStyle: 'bold' },
+    { token: 'enum', foreground: '0099FF', fontStyle: 'bold' },
+    { token: 'typeParameter', foreground: '0099FF' },
+
+    // Functions and Methods - cyan blue
+    { token: 'function', foreground: '00DDFF', fontStyle: 'bold' },
+    { token: 'function.call', foreground: '00DDFF' },
+    { token: 'method', foreground: '00DDFF' },
+    { token: 'member', foreground: '00DDFF' },
+    { token: 'macro', foreground: '00DDFF', fontStyle: 'bold' },
+
+    // Variables - bright green
+    { token: 'variable', foreground: '00FF00' },
+    { token: 'variable.name', foreground: '00FF00' },
+    { token: 'variable.parameter', foreground: '00FF88' },
+    { token: 'parameter', foreground: '00FF88' },
+    { token: 'identifier', foreground: '00FF00' },
+
+    // Properties - light green
+    { token: 'property', foreground: '7FFF7F' },
+    { token: 'attribute', foreground: '7FFF7F' },
+
+    // Strings - yellow/gold
+    { token: 'string', foreground: 'FFFF00' },
+    { token: 'string.quoted', foreground: 'FFFF00' },
+    { token: 'string.escape', foreground: 'FFD700', fontStyle: 'bold' },
+
+    // Numbers - orange
+    { token: 'number', foreground: 'FF8800' },
+    { token: 'number.hex', foreground: 'FF8800' },
+    { token: 'number.float', foreground: 'FF8800' },
+    { token: 'constant.numeric', foreground: 'FF8800' },
+
+    // Constants - bright orange
+    { token: 'constant', foreground: 'FF6600', fontStyle: 'bold' },
+    { token: 'constant.language', foreground: 'FF6600', fontStyle: 'bold' },
+
+    // Regex - neon blue
+    { token: 'regexp', foreground: '00BFFF' },
+
+    // Tags - neon blue (for HTML/XML)
+    { token: 'tag', foreground: '00BFFF' },
+
+    // Annotations/Decorators - lime green
+    { token: 'annotation', foreground: '00FF00', fontStyle: 'bold' },
+    { token: 'decorator', foreground: '00FF00', fontStyle: 'bold' },
+
+    // Namespace - cyan blue
+    { token: 'namespace', foreground: '00DDDD' },
+
+    // Labels - bright green
+    { token: 'label', foreground: '00FF00' },
   ],
   colors: {
     'editor.foreground': '#00FF00',
     'editor.background': '#000000',
     'editorCursor.foreground': '#00FF00',
-    'editor.lineHighlightBackground': '#001100',
+    'editor.lineHighlightBackground': '#0A0A0A',
     'editorLineNumber.foreground': '#008800',
     'editorLineNumber.activeForeground': '#00FF00',
-    'editor.selectionBackground': '#003300',
-    'editor.inactiveSelectionBackground': '#002200',
-    'editorIndentGuide.background': '#001100',
-    'editorIndentGuide.activeBackground': '#003300',
-    'editorWhitespace.foreground': '#002200',
-    'editor.findMatchBackground': '#005500',
-    'editor.findMatchHighlightBackground': '#003300',
-    'editor.wordHighlightBackground': '#003300',
-    'editor.wordHighlightStrongBackground': '#005500',
-    'editorBracketMatch.background': '#003300',
+    'editor.selectionBackground': '#264F78',
+    'editor.inactiveSelectionBackground': '#1A3A4A',
+    'editorIndentGuide.background': '#1A1A1A',
+    'editorIndentGuide.activeBackground': '#00FF0033',
+    'editorWhitespace.foreground': '#2A2A2A',
+    'editor.findMatchBackground': '#515C6A',
+    'editor.findMatchHighlightBackground': '#3A4A5A',
+    'editor.wordHighlightBackground': '#575757',
+    'editor.wordHighlightStrongBackground': '#004972',
+    'editorBracketMatch.background': '#0064001A',
     'editorBracketMatch.border': '#00FF00',
-    'scrollbarSlider.background': '#00330066',
-    'scrollbarSlider.hoverBackground': '#00550088',
-    'scrollbarSlider.activeBackground': '#00FF0066',
+    'scrollbarSlider.background': '#00FF0033',
+    'scrollbarSlider.hoverBackground': '#00FF0055',
+    'scrollbarSlider.activeBackground': '#00FF0077',
   }
 }
 

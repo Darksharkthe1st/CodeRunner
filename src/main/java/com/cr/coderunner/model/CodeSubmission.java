@@ -181,8 +181,6 @@ public class CodeSubmission {
 
         //Set success to true/false depending on status
         exec.success = exec.exitStatus.isEmpty();
-        if (exec.success)
-            exec.exitStatus = "success";
     }
 
     /** Runs protected process with Time and Output Limits. Returns status depending on if those limits are hit

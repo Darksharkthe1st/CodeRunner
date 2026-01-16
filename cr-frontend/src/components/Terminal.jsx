@@ -1,4 +1,21 @@
-function Terminal({ output, darkMode, fontSize, runData }) {
+import ExecutingAnimation from './ExecutingAnimation'
+
+function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
+  // Show executing animation when code is running
+  if (isExecuting) {
+    return (
+      <div className={`w-full h-full border-2 overflow-hidden ${
+        darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
+      }`}>
+        <div className={`w-full h-full overflow-auto ${
+          darkMode ? 'bg-black' : 'bg-gray-900'
+        }`}>
+          <ExecutingAnimation darkMode={darkMode} fontSize={fontSize} />
+        </div>
+      </div>
+    )
+  }
+
   // If runData is provided, format it with colors
   if (runData) {
     return (

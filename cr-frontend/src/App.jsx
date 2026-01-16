@@ -11,9 +11,11 @@ function App() {
   const [response, setResponse] = useState('')
   const [runData, setRunData] = useState(null)
   const [selectedLanguage, setSelectedLanguage] = useState('C')
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(true)
   const [fontSize, setFontSize] = useState(14)
   const [alertData, setAlertData] = useState({ show: false, success: false, exitStatus: '' })
+  const [isExecuting, setIsExecuting] = useState(false)
+  const [abortController, setAbortController] = useState(null)
 
   useEffect(() => {
     const fetchTemplate = async () => {
@@ -36,6 +38,21 @@ function App() {
   }, [selectedLanguage])
 
   const handleSubmit = async () => {
+    if (isExecuting) {
+      // Stop execution
+      if (abortController) {
+        abortController.abort()
+      }
+      return
+    }
+
+    // Create new abort controller for this execution
+    const controller = new AbortController()
+    setAbortController(controller)
+    setIsExecuting(true)
+    setRunData(null)
+    setResponse('')
+
     try {
       // First request to /submit
       await fetch('http://localhost:8080/submit', {
@@ -47,7 +64,8 @@ function App() {
           code: text,
           language: selectedLanguage,
           problem: "two"
-        })
+        }),
+        signal: controller.signal
       })
 
       // Second request to /run
@@ -58,7 +76,8 @@ function App() {
         },
         body: JSON.stringify({
           input: ""
-        })
+        }),
+        signal: controller.signal
       })
 
       const data = await runRes.json()
@@ -76,15 +95,36 @@ function App() {
 
       console.log('Run Response:', data)
     } catch (error) {
-      // For network errors, display as plain text
-      setRunData(null)
-      setResponse(`> Error\n=====================================\n\n${error.message}`)
-      setAlertData({
-        show: true,
-        success: false,
-        exitStatus: `Network Error: ${error.message}`
-      })
-      console.error('Error:', error)
+      if (error.name === 'AbortError') {
+        // User cancelled execution
+        setRunData(null)
+        setResponse(
+          '╔════════════════════════════════════════╗\n' +
+          '║                                        ║\n' +
+          '║   EXECUTION TERMINATED BY USER         ║\n' +
+          '║                                        ║\n' +
+          '╚════════════════════════════════════════╝\n\n' +
+          '> Process was stopped during execution.\n'
+        )
+        setAlertData({
+          show: true,
+          success: false,
+          exitStatus: 'Execution terminated by user'
+        })
+      } else {
+        // For network errors, display as plain text
+        setRunData(null)
+        setResponse(`> Error\n=====================================\n\n${error.message}`)
+        setAlertData({
+          show: true,
+          success: false,
+          exitStatus: `Network Error: ${error.message}`
+        })
+        console.error('Error:', error)
+      }
+    } finally {
+      setIsExecuting(false)
+      setAbortController(null)
     }
   }
 
@@ -105,7 +145,7 @@ function App() {
       {/* Header */}
       <header className={`${darkMode ? 'bg-gray-950 border-b-2 border-green-500' : 'bg-gray-900 border-b-2 border-green-400'} text-white p-4 shadow-xl`}>
         <div className="flex justify-between items-center px-4">
-          <h1 className={`text-2xl font-bold tracking-wider ${darkMode ? 'text-green-400' : 'text-green-500'}`}>
+          <h1 className={`text-2xl tracking-wider ${darkMode ? 'text-green-400' : 'text-green-500'}`} style={{ fontFamily: "'Cascadia Code', monospace", fontWeight: 700 }}>
             {'>'} CODE_RUNNER
           </h1>
           <div className="flex items-center gap-3 relative">
@@ -143,9 +183,17 @@ function App() {
             <div className="relative">
               <button
                 onClick={handleSubmit}
-                className={`h-10 px-6 border-2 ${darkMode ? 'border-green-500 bg-green-500 bg-opacity-10 text-green-400 hover:bg-opacity-20' : 'border-green-400 bg-green-400 bg-opacity-10 text-green-500 hover:bg-opacity-20'} transition-colors font-semibold font-mono tracking-wider`}
+                className={`h-10 px-6 border-2 transition-colors font-semibold font-mono tracking-wider ${
+                  isExecuting
+                    ? darkMode
+                      ? 'border-red-500 bg-red-500 bg-opacity-10 text-red-400 hover:bg-opacity-20'
+                      : 'border-red-400 bg-red-400 bg-opacity-10 text-red-500 hover:bg-opacity-20'
+                    : darkMode
+                      ? 'border-green-500 bg-green-500 bg-opacity-10 text-green-400 hover:bg-opacity-20'
+                      : 'border-green-400 bg-green-400 bg-opacity-10 text-green-500 hover:bg-opacity-20'
+                }`}
               >
-                [RUN]
+                {isExecuting ? '[STOP]' : '[RUN]'}
               </button>
               {alertData.show && (
                 <Alert
@@ -185,7 +233,7 @@ function App() {
             </h2>
           </div>
           <div className="flex-1">
-            <Terminal output={response} darkMode={darkMode} fontSize={fontSize} runData={runData} />
+            <Terminal output={response} darkMode={darkMode} fontSize={fontSize} runData={runData} isExecuting={isExecuting} />
           </div>
         </div>
 
