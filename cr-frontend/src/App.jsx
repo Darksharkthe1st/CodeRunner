@@ -4,7 +4,7 @@ import Terminal from './components/Terminal'
 import Alert from './components/Alert'
 import { useState, useEffect } from 'react'
 
-const SUPPORTED_LANGUAGES = ["C", "C++", "Java", "Python"]
+const SUPPORTED_LANGUAGES = ["C", "Java", "Python"]
 
 function App() {
   const [text, setText] = useState('')
