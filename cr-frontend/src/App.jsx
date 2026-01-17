@@ -17,10 +17,13 @@ function App() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [abortController, setAbortController] = useState(null)
 
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     const fetchTemplate = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/get_template?language=${encodeURIComponent(selectedLanguage)}`, {
+        console.log(`Fetching at ${apiUrl}/get_template?language=${encodeURIComponent(selectedLanguage)} ...`);
+        const res = await fetch(`${apiUrl}/get_template?language=${encodeURIComponent(selectedLanguage)}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -55,7 +58,7 @@ function App() {
 
     try {
       // First request to /submit
-      await fetch('http://localhost:8080/submit', {
+      await fetch(`${apiUrl}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,7 +72,7 @@ function App() {
       })
 
       // Second request to /run
-      const runRes = await fetch('http://localhost:8080/run', {
+      const runRes = await fetch(`${apiUrl}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
