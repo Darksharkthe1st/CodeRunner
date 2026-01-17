@@ -31,3 +31,6 @@ replay_pid*
 /target/surefire-reports
 CLAUDE.md
 /target
+
+# Keystore file
+keystore.p12
