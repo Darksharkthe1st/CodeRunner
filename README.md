@@ -93,9 +93,11 @@ npm run dev
 ```
 
 ### 4. Docker Setup
-Ensure Docker is running and the `gcc:13-bookworm` image is available:
+Ensure Docker is running and the necessary images are available:
 ```bash
-docker pull gcc:13-bookworm
+docker pull alpine:latest
+docker pull python:3.12-alpine
+docker pull eclipse-temurin:21-alpine
 ```
 
 ## Usage
