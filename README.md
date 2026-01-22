@@ -212,7 +212,7 @@ docker run --privileged --cgroupns=host -p 8080:8080 coderunner
 
 | Language | Execution Method | Status |
 |----------|-----------------|--------|
-| Java | eclipse-temurin:13-alpine | ✅ Supported |
+| Java | eclipse-temurin:21-alpine | ✅ Supported |
 | C | alpine:latest | ✅ Supported |
 | C++ | alpine:latest | 🚧 Planned |
 | Python | python:3.12-alpine | ✅ Supported |
