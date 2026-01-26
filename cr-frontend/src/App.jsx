@@ -4,13 +4,13 @@ import Terminal from './components/Terminal'
 import Alert from './components/Alert'
 import { useState, useEffect } from 'react'
 
-const SUPPORTED_LANGUAGES = ["C", "C++", "Java", "Python"]
+const SUPPORTED_LANGUAGES = ["Java", "Python", "C"]
 
 function App() {
   const [text, setText] = useState('')
   const [response, setResponse] = useState('')
   const [runData, setRunData] = useState(null)
-  const [selectedLanguage, setSelectedLanguage] = useState('C')
+  const [selectedLanguage, setSelectedLanguage] = useState('Python')
   const [darkMode, setDarkMode] = useState(true)
   const [fontSize, setFontSize] = useState(14)
   const [alertData, setAlertData] = useState({ show: false, success: false, exitStatus: '' })
