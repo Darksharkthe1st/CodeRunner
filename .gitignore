@@ -31,3 +31,14 @@ replay_pid*
 /target/surefire-reports
 CLAUDE.md
 /target
+
+# Caddy Data & Config
+/CaddyDeployment/caddy/data/
+/CaddyDeployment/caddy/config/
+*.log
+
+# Local certificates and keys
+*.crt
+*.key
+*.pem
+
