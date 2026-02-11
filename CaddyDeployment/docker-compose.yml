@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  springboot:
+    image: coderunner:latest
+    container_name: coderunner
+    privileged: true
+    cgroup: host
+    ports:
+      - "8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-proxy
+    ports: 
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      - springboot
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,4 @@
+api-coderunner.duckdns.org {
+	reverse_proxy coderunner:8080
+	encode gzip
+}
