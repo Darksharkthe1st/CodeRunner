@@ -1,5 +1,5 @@
 # Install Java on top of Docker image
-FROM docker:24-dind as builder
+FROM docker:24-dind AS builder
 
 # Install Java 21
 RUN apk add --no-cache openjdk21 openjdk21-jdk maven
