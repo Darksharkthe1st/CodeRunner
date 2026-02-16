@@ -34,7 +34,7 @@ public class Problem {
         CodeExecution[] executions = new CodeExecution[testCases.length];
 
         for (int i = 0; i < executions.length; i++) {
-            executions[i] = new CodeExecution(codeSubmission, testCases[i].input);
+            executions[i] = new CodeExecution(codeSubmission/*, testCases[i].input*/);
             executions[i].start();
         }
 

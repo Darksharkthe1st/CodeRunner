@@ -49,7 +49,7 @@ public class ProblemRequestTest {
                 """;
 
         //Create submission with code to submit via post request
-        CodeSubmission mySubmission = new CodeSubmission(code, "Java", "one");
+        CodeSubmission mySubmission = new CodeSubmission(code, "Java", "one","inputs");
 //        Problems problems = new Problems(
 //                List.of(
 //
@@ -98,7 +98,8 @@ public class ProblemRequestTest {
                 .body(new CodeSubmission(
                   code,
                   "Java",
-                  "name"
+                  "name",
+                        "inputs"
 
                 ))
                 .exchange()

@@ -21,15 +21,17 @@ public class CodeSubmission {
     public static final Object buildLock = new Object();
 
     public final String code;
+    public final String input;
     public final String language;
     public final String problemName;
 
     @JsonCreator
-    public CodeSubmission(@JsonProperty(value = "code", required = true) String code, @JsonProperty(value = "language", required = true) String language, @JsonProperty(value = "problem", required = true) String problemName) {
+    public CodeSubmission(@JsonProperty(value = "code", required = true) String code, @JsonProperty(value = "language", required = true) String language, @JsonProperty(value = "problem", required = true) String problemName, @JsonProperty(value = "input", required = true) String input) {
         if (code == null || language == null || problemName == null) {
             throw new IllegalArgumentException("NULL Parameters. Required fields: 'code', 'language', 'input', 'problem'.");
         }
         this.code = code;
+        this.input = "Howdy do";
         this.language = language;
         this.problemName = problemName;
     }
@@ -93,7 +95,7 @@ public class CodeSubmission {
 
             //Overwrite existing text files
             Files.writeString(codeFile.toPath(),  this.code,  StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            Files.writeString(inputFile.toPath(), exec.input, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(inputFile.toPath(), this.input, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             //Catch exception if files cannot be written to
         } catch (IOException e) {

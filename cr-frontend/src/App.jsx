@@ -58,7 +58,7 @@ function App() {
 
     try {
       // First request to /submit
-      await fetch(`${apiUrl}/submit`, {
+      const runRes = await fetch(`${apiUrl}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,22 +66,25 @@ function App() {
         body: JSON.stringify({
           code: text,
           language: selectedLanguage,
-          problem: "two"
+          problem: "two",
+          input: "default input"
         }),
         signal: controller.signal
       })
 
+      console.log("THIS IS WORKING");
+
       // Second request to /run
-      const runRes = await fetch(`${apiUrl}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          input: ""
-        }),
-        signal: controller.signal
-      })
+      // const runRes = await fetch(`${apiUrl}/run`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     input: ""
+      //   }),
+      //   signal: controller.signal
+      // })
 
       const data = await runRes.json()
 

@@ -38,14 +38,20 @@ public class IDEController {
 
     //Created sample post mapping for testing purposes
     @PostMapping("/submit")
-    public void postSubmission(@RequestBody CodeSubmission codeSubmission) {
-        userData.addAttempt(codeSubmission);
+    public RunResult postSubmission(@RequestBody CodeSubmission codeSubmission) throws InterruptedException {
+        CodeExecution execution = new CodeExecution(codeSubmission);
+
+        execution.start();
+        execution.join();
+
+        return new RunResult(execution);
+//        userData.addAttempt(codeSubmission);
     }
 
     @PostMapping("/run")
     public RunResult runSubmission(@RequestBody String input) throws IOException, InterruptedException {
         CodeSubmission latestSubmission = userData.getLastSubmission();
-        CodeExecution execution = new CodeExecution(latestSubmission, input);
+        CodeExecution execution = new CodeExecution(latestSubmission);
 
         execution.start();
         execution.join();
