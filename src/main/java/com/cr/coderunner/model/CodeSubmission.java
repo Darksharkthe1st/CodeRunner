@@ -44,7 +44,7 @@ public class CodeSubmission {
     }
 
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile, File inputFile) {
-        List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--name", dirFile.getName(), "--pids-limit=64", "--memory=256m", "--cpus=0.5", "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
+        List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--name", dirFile.getName(), /*, "--pids-limit=64", "--memory=256m", "--cpus=0.5",*/ "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
         cmds.addAll(switch (language) {
             case "C" -> List.of("alpine:latest", "sh", "-c", "apk add --no-cache gcc musl-dev > none.txt && " + "gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName());
             case "Python" -> List.of("python:3.12-alpine", "sh", "-c", "python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());

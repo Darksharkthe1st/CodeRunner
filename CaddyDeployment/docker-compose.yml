@@ -1,16 +1,21 @@
-version: '3.8'
-
 services:
   springboot:
     image: coderunner:latest
     container_name: coderunner
     privileged: true
-    cgroup: host
+    environment:
+      - DOCKER_TLS_CERTDIR=""
+      - SPRING_PROFILES_ACTIVE=prod 
+    command:
+      - dockerd
+      - --storage-driver=overlay2
+      - --exec-opt
+      - native.cgroupdriver=cgroupfs
+      - --iptables=false
+    volumes:
+      - dind-data:/var/lib/docker
     ports:
       - "8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-
     networks:
       - app-network
     restart: unless-stopped
@@ -30,6 +35,9 @@ services:
     restart: unless-stopped
     depends_on:
       - springboot
+
+volumes:
+  dind-data:
 
 networks:
   app-network:
