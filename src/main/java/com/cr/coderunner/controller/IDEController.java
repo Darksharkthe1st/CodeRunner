@@ -4,6 +4,7 @@ import com.cr.coderunner.dto.RunResult;
 import com.cr.coderunner.model.CodeExecution;
 import com.cr.coderunner.model.CodeSubmission;
 import com.cr.coderunner.model.UserData;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ public class IDEController {
         return supported_langs;
     }
 
+    @Timed(value = "greeting.time", description = "Time taken to return greeting")
     @GetMapping("/")
     public String index() {
         return "Welcome to CodeRunner! Go to Route /submit to upload code and /check to view it.";
