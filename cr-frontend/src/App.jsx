@@ -17,6 +17,8 @@ function App() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [abortController, setAbortController] = useState(null)
   const [inputText, setInputText] = useState('')
+  const [codeHelperText, setCodeHelperText] = useState('')
+  const [activeTab, setActiveTab] = useState('Input')
 
   //Variables for polling tracking:
   const pollingIntervalRef = useRef(null);
@@ -321,25 +323,43 @@ function App() {
             <Terminal output={response} darkMode={darkMode} fontSize={fontSize} runData={runData} isExecuting={isExecuting} />
           </div>
 
-          {/* Input Section */}
+          {/* Input Section with Tabs */}
           <div className={`flex items-center gap-2 mb-2 pb-2 mt-4 border-b-2 ${darkMode ? 'border-green-500' : 'border-green-400'}`}>
             <span className={`text-lg font-bold font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{'>'}</span>
-            <h2 className={`text-lg font-semibold font-mono tracking-wide ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+            <button
+              onClick={() => setActiveTab('Input')}
+              className={`text-lg font-semibold font-mono tracking-wide transition-colors ${
+                activeTab === 'Input'
+                  ? darkMode ? 'text-green-400 underline' : 'text-green-600 underline'
+                  : darkMode ? 'text-green-700 hover:text-green-500' : 'text-green-800 hover:text-green-600'
+              }`}
+            >
               INPUT
-            </h2>
+            </button>
+            <span className={`text-lg font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>|</span>
+            <button
+              onClick={() => setActiveTab('CodeHelper')}
+              className={`text-lg font-semibold font-mono tracking-wide transition-colors ${
+                activeTab === 'CodeHelper'
+                  ? darkMode ? 'text-green-400 underline' : 'text-green-600 underline'
+                  : darkMode ? 'text-green-700 hover:text-green-500' : 'text-green-800 hover:text-green-600'
+              }`}
+            >
+              CODE_HELPER
+            </button>
           </div>
           <div className="flex-1 min-h-0">
             <div className={`w-full h-full border-2 overflow-hidden ${
               darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
             }`}>
               <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                value={activeTab === 'Input' ? inputText : codeHelperText}
+                onChange={(e) => activeTab === 'Input' ? setInputText(e.target.value) : setCodeHelperText(e.target.value)}
                 className={`w-full h-full p-4 resize-none focus:outline-none font-mono ${
                   darkMode ? 'bg-black text-green-400' : 'bg-gray-900 text-green-500'
                 }`}
                 style={{ fontSize: `${fontSize}px` }}
-                placeholder="> Enter input here..."
+                placeholder={activeTab === 'Input' ? '> Enter input here...' : '> Enter code helper prompt here...'}
                 spellCheck="false"
               />
             </div>
