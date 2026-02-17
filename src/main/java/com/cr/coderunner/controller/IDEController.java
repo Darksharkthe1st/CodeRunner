@@ -48,17 +48,6 @@ public class IDEController {
 //        userData.addAttempt(codeSubmission);
     }
 
-    @PostMapping("/run")
-    public RunResult runSubmission(@RequestBody String input) throws IOException, InterruptedException {
-        CodeSubmission latestSubmission = userData.getLastSubmission();
-        CodeExecution execution = new CodeExecution(latestSubmission);
-
-        execution.start();
-        execution.join();
-
-        return new RunResult(execution);
-    }
-
     @GetMapping("/get_template")
     public String getTemplate(@RequestParam String language) {
         return switch (language) {

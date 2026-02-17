@@ -31,7 +31,7 @@ public class CodeSubmission {
             throw new IllegalArgumentException("NULL Parameters. Required fields: 'code', 'language', 'input', 'problem'.");
         }
         this.code = code;
-        this.input = "Howdy do";
+        this.input = input;
         this.language = language;
         this.problemName = problemName;
     }

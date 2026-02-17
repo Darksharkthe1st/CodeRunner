@@ -72,20 +72,6 @@ function App() {
         signal: controller.signal
       })
 
-      console.log("THIS IS WORKING");
-
-      // Second request to /run
-      // const runRes = await fetch(`${apiUrl}/run`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     input: ""
-      //   }),
-      //   signal: controller.signal
-      // })
-
       const data = await runRes.json()
 
       // Store the run data for Terminal component
