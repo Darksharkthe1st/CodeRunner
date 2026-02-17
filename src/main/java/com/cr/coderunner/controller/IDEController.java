@@ -35,10 +35,10 @@ public class IDEController {
     }
 
     //Created sample get mapping for testing purposes
-    @GetMapping("/check")
-    public CodeSubmission checkSubmission() {
-        return userData.getLastSubmission();
-    }
+//    @GetMapping("/check")
+//    public CodeSubmission checkSubmission() {
+//        return userData.getLastSubmission();
+//    }
 
     //Submit to the executor, returns the ID used for tracking it
     @PostMapping("/submit")
@@ -47,15 +47,9 @@ public class IDEController {
     }
 
     @PostMapping("/check")
-    public RunResult getSubmission(@RequestBody String execID) {
-        CodeExecution result = executionService.checkExecution(execID);
-        if  (result == null) {
-            return new RunResult(false, -1, "", "", "", "RUNNING");
-        } else if (result.codeSubmission == null) {
-            return new RunResult(false, -1, "", "", "", "NONEXISTENT");
-        } else {
-            return new RunResult(result);
-        }
+    public RunResult checkSubmission(@RequestBody String execID) {
+//        System.out.println("execID: " + execID);
+        return executionService.checkExecution(execID);
     }
 
     @GetMapping("/get_template")
@@ -87,6 +81,11 @@ public class IDEController {
 
         //Success if all pulls exited.
         return "Success!";
+    }
+
+    @GetMapping("/check_queue")
+    public String checkQueue() throws IOException, InterruptedException {
+        return executionService.listExecutions();
     }
 
 

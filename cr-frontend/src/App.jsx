@@ -2,7 +2,7 @@ import './App.css'
 import CodeEditor from './components/CodeEditor'
 import Terminal from './components/Terminal'
 import Alert from './components/Alert'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const SUPPORTED_LANGUAGES = ["Java", "Python", "C"]
 
@@ -16,6 +16,12 @@ function App() {
   const [alertData, setAlertData] = useState({ show: false, success: false, exitStatus: '' })
   const [isExecuting, setIsExecuting] = useState(false)
   const [abortController, setAbortController] = useState(null)
+
+  //Variables for polling tracking:
+  const pollingIntervalRef = useRef(null);
+  const [execID, setExecID] = useState(null);
+  
+
 
   const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -40,12 +46,106 @@ function App() {
     fetchTemplate()
   }, [selectedLanguage])
 
+  // Cleanup polling on component unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+      }
+    }
+  }, [])
+
+  // Helper function to stop polling
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+    setIsExecuting(false)
+    setAbortController(null)
+    setExecID(null)
+  }
+
+  // Polling function to check execution status
+  const startPolling = (uuid) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const checkRes = await fetch(`${apiUrl}/check`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(uuid)
+        })
+
+        const result = await checkRes.json()
+        console.log('Poll result:', result)
+
+        if (result.status === 'FINISHED') {
+          // Execution completed
+          setRunData(result)
+          setResponse('') // Clear plain text response
+
+          setAlertData({
+            show: true,
+            success: result.success,
+            exitStatus: result.exitStatus || (result.success ? 'Execution completed successfully' : 'Execution failed')
+          })
+
+          stopPolling()
+        } else if (result.status === 'NONEXISTENT') {
+          // Execution error
+          setRunData(null)
+          setResponse(`> Error\n=====================================\n\nExecution error: Process not found`)
+          setAlertData({
+            show: true,
+            success: false,
+            exitStatus: 'Execution Error: Process not found'
+          })
+
+          stopPolling()
+        }
+        // If status === 'RUNNING', continue polling (do nothing)
+      } catch (error) {
+        console.error('Polling error:', error)
+        setRunData(null)
+        setResponse(`> Error\n=====================================\n\n${error.message}`)
+        setAlertData({
+          show: true,
+          success: false,
+          exitStatus: `Polling Error: ${error.message}`
+        })
+
+        stopPolling()
+      }
+    }, 500) // Poll every 500ms
+
+    pollingIntervalRef.current = pollInterval
+  }
+
   const handleSubmit = async () => {
     if (isExecuting) {
       // Stop execution
       if (abortController) {
         abortController.abort()
       }
+      stopPolling()
+
+      // Show termination message
+      setRunData(null)
+      setResponse(
+        '╔════════════════════════════════════════╗\n' +
+        '║                                        ║\n' +
+        '║   EXECUTION TERMINATED BY USER         ║\n' +
+        '║                                        ║\n' +
+        '╚════════════════════════════════════════╝\n\n' +
+        '> Process was stopped during execution.\n'
+      )
+      setAlertData({
+        show: true,
+        success: false,
+        exitStatus: 'Execution terminated by user'
+      })
       return
     }
 
@@ -57,7 +157,7 @@ function App() {
     setResponse('')
 
     try {
-      // First request to /submit
+      // First request to /submit - returns UUID
       const runRes = await fetch(`${apiUrl}/submit`, {
         method: 'POST',
         headers: {
@@ -72,23 +172,15 @@ function App() {
         signal: controller.signal
       })
 
-      const data = await runRes.json()
+      const uuid = await runRes.text()
+      setExecID(uuid)
+      console.log('Execution UUID:', uuid)
 
-      // Store the run data for Terminal component
-      setRunData(data)
-      setResponse('') // Clear plain text response
-
-      // Show alert with exit status
-      setAlertData({
-        show: true,
-        success: data.success,
-        exitStatus: data.exitStatus || (data.success ? 'Execution completed successfully' : 'Execution failed')
-      })
-
-      console.log('Run Response:', data)
+      // Start polling for results
+      startPolling(uuid)
     } catch (error) {
       if (error.name === 'AbortError') {
-        // User cancelled execution
+        // User cancelled execution during submit
         setRunData(null)
         setResponse(
           '╔════════════════════════════════════════╗\n' +
@@ -114,7 +206,6 @@ function App() {
         })
         console.error('Error:', error)
       }
-    } finally {
       setIsExecuting(false)
       setAbortController(null)
     }

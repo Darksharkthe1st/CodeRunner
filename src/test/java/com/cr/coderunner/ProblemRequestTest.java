@@ -88,9 +88,9 @@ public class ProblemRequestTest {
                 """;
 
         ManyResults expRes = new ManyResults(List.of(
-                new RunResult(true, -1.0, "Here: money\n", "", "success"),
-                new RunResult(true, -1.0, "Here: funny\n", "", "success"),
-                new RunResult(false, -1.0, "Here: nope\n", "", "Failure: Incorrect output.\n")
+                new RunResult(true, -1.0, "Here: money\n", "", "success", "FINISHED"),
+                new RunResult(true, -1.0, "Here: funny\n", "", "success", "FINISHED"),
+                new RunResult(false, -1.0, "Here: nope\n", "", "Failure: Incorrect output.\n", "FINISHED")
         ));
 
         RestTestClient.BodySpec<ManyResults, ?> actual = restTestClient.post()

@@ -65,7 +65,8 @@ public class IDERequestTest {
                         -1.0,
                         "Hi\n",
                         "",
-                        "success"
+                        "success",
+                        "FINISHED"
                 ));
     }
 
@@ -101,7 +102,8 @@ public class IDERequestTest {
                         -1.0,
                         "Hi\n",
                         "",
-                        "success"
+                        "success",
+                        "FINISHED"
         ));
 
     }

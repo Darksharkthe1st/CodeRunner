@@ -26,13 +26,13 @@ public class RunResult {
         this.status = status;
     }
 
-    public RunResult(CodeExecution execution) {
+    public RunResult(CodeExecution execution, String status) {
         this.success = execution.success;
         this.runtime = execution.runtime;
         this.output = execution.output;
         this.error = execution.error;
         this.exitStatus = execution.exitStatus;
-        this.status = "FINISHED";
+        this.status = status;
     }
 
     @Override
