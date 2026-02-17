@@ -363,13 +363,19 @@ function App() {
           {/* Draggable Divider */}
           <div
             onMouseDown={handleDragStart}
-            className={`h-1 cursor-row-resize transition-colors ${
+            className={`relative h-4 cursor-row-resize transition-colors flex items-center justify-center ${
               isDragging
                 ? darkMode ? 'bg-green-400' : 'bg-green-600'
                 : darkMode ? 'bg-green-500 hover:bg-green-400' : 'bg-green-400 hover:bg-green-600'
             }`}
             style={{ flexShrink: 0 }}
-          />
+          >
+            <div className={`flex gap-1 ${darkMode ? 'text-black' : 'text-black'} select-none`} style={{ fontSize: '18px', fontWeight: 900, lineHeight: '1' }}>
+              <span>⋮</span>
+              <span>⋮</span>
+              <span>⋮</span>
+            </div>
+          </div>
 
           {/* Input Section with Tabs */}
           <div style={{ height: `${100 - outputHeight}%`, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
