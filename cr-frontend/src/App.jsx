@@ -16,6 +16,7 @@ function App() {
   const [alertData, setAlertData] = useState({ show: false, success: false, exitStatus: '' })
   const [isExecuting, setIsExecuting] = useState(false)
   const [abortController, setAbortController] = useState(null)
+  const [inputText, setInputText] = useState('')
 
   //Variables for polling tracking:
   const pollingIntervalRef = useRef(null);
@@ -167,7 +168,7 @@ function App() {
           code: text,
           language: selectedLanguage,
           problem: "two",
-          input: "default input"
+          input: inputText
         }),
         signal: controller.signal
       })
@@ -307,16 +308,41 @@ function App() {
           </div>
         </div>
 
-        {/* Right Side - Terminal Output */}
+        {/* Right Side - Terminal Output and Input */}
         <div className="flex flex-col min-h-0">
+          {/* Output Section */}
           <div className={`flex items-center gap-2 mb-2 pb-2 border-b-2 ${darkMode ? 'border-green-500' : 'border-green-400'}`}>
             <span className={`text-lg font-bold font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{'>'}</span>
             <h2 className={`text-lg font-semibold font-mono tracking-wide ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-              TERMINAL
+              OUTPUT
             </h2>
           </div>
           <div className="flex-1 min-h-0">
             <Terminal output={response} darkMode={darkMode} fontSize={fontSize} runData={runData} isExecuting={isExecuting} />
+          </div>
+
+          {/* Input Section */}
+          <div className={`flex items-center gap-2 mb-2 pb-2 mt-4 border-b-2 ${darkMode ? 'border-green-500' : 'border-green-400'}`}>
+            <span className={`text-lg font-bold font-mono ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{'>'}</span>
+            <h2 className={`text-lg font-semibold font-mono tracking-wide ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+              INPUT
+            </h2>
+          </div>
+          <div className="flex-1 min-h-0">
+            <div className={`w-full h-full border-2 overflow-hidden ${
+              darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
+            }`}>
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                className={`w-full h-full p-4 resize-none focus:outline-none font-mono ${
+                  darkMode ? 'bg-black text-green-400' : 'bg-gray-900 text-green-500'
+                }`}
+                style={{ fontSize: `${fontSize}px` }}
+                placeholder="> Enter input here..."
+                spellCheck="false"
+              />
+            </div>
           </div>
         </div>
 
