@@ -45,3 +45,4 @@ CLAUDE.md
 .env
 /target
 src/main/resources/application.properties
+/target
