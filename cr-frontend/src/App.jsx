@@ -2,6 +2,7 @@ import './App.css'
 import CodeEditor from './components/CodeEditor'
 import Terminal from './components/Terminal'
 import Alert from './components/Alert'
+import ChatInterface from './components/ChatInterface'
 import { useState, useEffect, useRef } from 'react'
 
 const SUPPORTED_LANGUAGES = ["Java", "Python", "C"]
@@ -17,7 +18,6 @@ function App() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [abortController, setAbortController] = useState(null)
   const [inputText, setInputText] = useState('')
-  const [codeHelperText, setCodeHelperText] = useState('')
   const [activeTab, setActiveTab] = useState('Input')
   const [outputHeight, setOutputHeight] = useState(50) // Percentage of container height
   const [isDragging, setIsDragging] = useState(false)
@@ -404,20 +404,24 @@ function App() {
               </button>
             </div>
             <div className="flex-1 min-h-0">
-              <div className={`w-full h-full border-2 overflow-hidden ${
-                darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
-              }`}>
-                <textarea
-                  value={activeTab === 'Input' ? inputText : codeHelperText}
-                  onChange={(e) => activeTab === 'Input' ? setInputText(e.target.value) : setCodeHelperText(e.target.value)}
-                  className={`w-full h-full p-4 resize-none focus:outline-none font-mono ${
-                    darkMode ? 'bg-black text-green-400' : 'bg-gray-900 text-green-500'
-                  }`}
-                  style={{ fontSize: `${fontSize}px` }}
-                  placeholder={activeTab === 'Input' ? '> Enter input here...' : '> Enter code helper prompt here...'}
-                  spellCheck="false"
-                />
-              </div>
+              {activeTab === 'Input' ? (
+                <div className={`w-full h-full border-2 overflow-hidden ${
+                  darkMode ? 'border-green-500 shadow-lg shadow-green-500/20' : 'border-green-400 shadow-lg shadow-green-400/20'
+                }`}>
+                  <textarea
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    className={`w-full h-full p-4 resize-none focus:outline-none font-mono ${
+                      darkMode ? 'bg-black text-green-400' : 'bg-gray-900 text-green-500'
+                    }`}
+                    style={{ fontSize: `${fontSize}px` }}
+                    placeholder='> Enter input here...'
+                    spellCheck="false"
+                  />
+                </div>
+              ) : (
+                <ChatInterface darkMode={darkMode} fontSize={fontSize} />
+              )}
             </div>
           </div>
         </div>
