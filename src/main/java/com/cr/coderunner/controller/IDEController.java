@@ -4,6 +4,7 @@ import com.cr.coderunner.dto.RunResult;
 import com.cr.coderunner.model.CodeExecution;
 import com.cr.coderunner.model.CodeSubmission;
 import com.cr.coderunner.model.UserData;
+import com.cr.coderunner.service.CodeExecutionService;
 import io.micrometer.core.annotation.Timed;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +14,13 @@ import java.io.IOException;
 public class IDEController {
     //TODO: Switch from use of userData class to SQL-Based dataset
     private final UserData userData;
+    private final CodeExecutionService executionService;
+
     private static final String[] supported_langs = new String[] {"Java", "C", "Python"};
 
-    public IDEController(UserData userData) {
+    public IDEController(UserData userData, CodeExecutionService executionService) {
         this.userData = userData;
+        this.executionService = executionService;
     }
 
     @GetMapping("/supported")
@@ -36,16 +40,22 @@ public class IDEController {
         return userData.getLastSubmission();
     }
 
-    //Created sample post mapping for testing purposes
+    //Submit to the executor, returns the ID used for tracking it
     @PostMapping("/submit")
-    public RunResult postSubmission(@RequestBody CodeSubmission codeSubmission) throws InterruptedException {
-        CodeExecution execution = new CodeExecution(codeSubmission);
+    public String postSubmission(@RequestBody CodeSubmission codeSubmission) throws InterruptedException {
+        return executionService.execute(new CodeExecution(codeSubmission));
+    }
 
-        execution.start();
-        execution.join();
-
-        return new RunResult(execution);
-//        userData.addAttempt(codeSubmission);
+    @PostMapping("/check")
+    public RunResult getSubmission(@RequestBody String execID) {
+        CodeExecution result = executionService.checkExecution(execID);
+        if  (result == null) {
+            return new RunResult(false, -1, "", "", "", "RUNNING");
+        } else if (result.codeSubmission == null) {
+            return new RunResult(false, -1, "", "", "", "NONEXISTENT");
+        } else {
+            return new RunResult(result);
+        }
     }
 
     @GetMapping("/get_template")

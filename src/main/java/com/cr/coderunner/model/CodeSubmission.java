@@ -27,7 +27,7 @@ public class CodeSubmission {
 
     @JsonCreator
     public CodeSubmission(@JsonProperty(value = "code", required = true) String code, @JsonProperty(value = "language", required = true) String language, @JsonProperty(value = "problem", required = true) String problemName, @JsonProperty(value = "input", required = true) String input) {
-        if (code == null || language == null || problemName == null) {
+        if (code == null || language == null || problemName == null || input == null) {
             throw new IllegalArgumentException("NULL Parameters. Required fields: 'code', 'language', 'input', 'problem'.");
         }
         this.code = code;

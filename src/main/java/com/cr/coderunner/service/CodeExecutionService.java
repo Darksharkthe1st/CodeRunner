@@ -2,12 +2,14 @@ package com.cr.coderunner.service;
 
 import com.cr.coderunner.model.CodeExecution;
 import com.cr.coderunner.model.CodeSubmission;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.UUID;
 
+@Service
 public class CodeExecutionService {
     //Arbitrarily we pick to have 10 threads executing
     private static final int threadCount = 10;
@@ -37,13 +39,18 @@ public class CodeExecutionService {
     }
 
     public CodeExecution checkExecution(String executionId) {
+        // Return an empty CodeExecution to indicate it doesn't exist
+        if (!results.containsKey(executionId)) {
+            return new CodeExecution(null);
+        }
+
         CodeExecution execution = results.get(executionId);
 
         //Only return the execution if it is done
         if( !execution.done ) {
             return null;
         } else {
-            return results.get(executionId);
+            return results.remove(executionId);
         }
     }
 }
