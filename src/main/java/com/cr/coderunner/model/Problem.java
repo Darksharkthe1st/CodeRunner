@@ -34,7 +34,7 @@ public class Problem {
         CodeExecution[] executions = new CodeExecution[testCases.length];
 
         for (int i = 0; i < executions.length; i++) {
-            executions[i] = new CodeExecution(codeSubmission, testCases[i].input);
+            executions[i] = new CodeExecution(codeSubmission/*, testCases[i].input*/);
             executions[i].start();
         }
 
@@ -58,7 +58,7 @@ public class Problem {
     public static List<RunResult> simplifyCases(CodeExecution[] cases) {
         RunResult[] results = new RunResult[cases.length];
         for (int i = 0; i < results.length; i++) {
-            results[i] = new RunResult(cases[i]);
+            results[i] = new RunResult(cases[i], "FINISHED");
         }
         return List.of(results);
     }

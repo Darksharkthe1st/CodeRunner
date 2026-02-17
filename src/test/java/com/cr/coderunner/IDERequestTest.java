@@ -46,7 +46,7 @@ public class IDERequestTest {
                 """;
 
         //Create submission with code to submit via post request
-        CodeSubmission mySubmission = new CodeSubmission(code, "C", "one");
+        CodeSubmission mySubmission = new CodeSubmission(code, "C", "one", "inputs");
 
         //Post submission
         restTestClient.post()
@@ -65,7 +65,8 @@ public class IDERequestTest {
                         -1.0,
                         "Hi\n",
                         "",
-                        "success"
+                        "success",
+                        "FINISHED"
                 ));
     }
 
@@ -81,7 +82,7 @@ public class IDERequestTest {
                 """;
 
         //Create submission with code to submit via post request
-        CodeSubmission mySubmission = new CodeSubmission(code, "Java", "one");
+        CodeSubmission mySubmission = new CodeSubmission(code, "Java", "one", "inputs");
 
 
         //Post submission
@@ -101,7 +102,8 @@ public class IDERequestTest {
                         -1.0,
                         "Hi\n",
                         "",
-                        "success"
+                        "success",
+                        "FINISHED"
         ));
 
     }

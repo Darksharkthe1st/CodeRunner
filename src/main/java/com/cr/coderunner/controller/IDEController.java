@@ -4,6 +4,7 @@ import com.cr.coderunner.dto.RunResult;
 import com.cr.coderunner.model.CodeExecution;
 import com.cr.coderunner.model.CodeSubmission;
 import com.cr.coderunner.model.UserData;
+import com.cr.coderunner.service.CodeExecutionService;
 import io.micrometer.core.annotation.Timed;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +14,13 @@ import java.io.IOException;
 public class IDEController {
     //TODO: Switch from use of userData class to SQL-Based dataset
     private final UserData userData;
+    private final CodeExecutionService executionService;
+
     private static final String[] supported_langs = new String[] {"Java", "C", "Python"};
 
-    public IDEController(UserData userData) {
+    public IDEController(UserData userData, CodeExecutionService executionService) {
         this.userData = userData;
+        this.executionService = executionService;
     }
 
     @GetMapping("/supported")
@@ -31,26 +35,21 @@ public class IDEController {
     }
 
     //Created sample get mapping for testing purposes
-    @GetMapping("/check")
-    public CodeSubmission checkSubmission() {
-        return userData.getLastSubmission();
-    }
+//    @GetMapping("/check")
+//    public CodeSubmission checkSubmission() {
+//        return userData.getLastSubmission();
+//    }
 
-    //Created sample post mapping for testing purposes
+    //Submit to the executor, returns the ID used for tracking it
     @PostMapping("/submit")
-    public void postSubmission(@RequestBody CodeSubmission codeSubmission) {
-        userData.addAttempt(codeSubmission);
+    public String postSubmission(@RequestBody CodeSubmission codeSubmission) throws InterruptedException {
+        return executionService.execute(new CodeExecution(codeSubmission));
     }
 
-    @PostMapping("/run")
-    public RunResult runSubmission(@RequestBody String input) throws IOException, InterruptedException {
-        CodeSubmission latestSubmission = userData.getLastSubmission();
-        CodeExecution execution = new CodeExecution(latestSubmission, input);
-
-        execution.start();
-        execution.join();
-
-        return new RunResult(execution);
+    @PostMapping("/check")
+    public RunResult checkSubmission(@RequestBody String execID) {
+//        System.out.println("execID: " + execID);
+        return executionService.checkExecution(execID);
     }
 
     @GetMapping("/get_template")
@@ -82,6 +81,11 @@ public class IDEController {
 
         //Success if all pulls exited.
         return "Success!";
+    }
+
+    @GetMapping("/check_queue")
+    public String checkQueue() throws IOException, InterruptedException {
+        return executionService.listExecutions();
     }
 
 
