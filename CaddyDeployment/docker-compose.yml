@@ -15,7 +15,7 @@ services:
     volumes:
       - dind-data:/var/lib/docker
     ports:
-      - "8080"
+      - "8080:8080"
     networks:
       - app-network
     restart: unless-stopped
