@@ -1,11 +1,38 @@
 import { useState } from 'react'
 
-function ChatInterface({ darkMode, fontSize }) {
+function ChatInterface({ darkMode, fontSize, apiUrl }) {
   const [messages, setMessages] = useState('')
   const [inputText, setInputText] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
+    if (!inputText.trim()) return
+
+    setIsLoading(true)
     setMessages('> Completing Request...')
+
+    try {
+      const response = await fetch(`${apiUrl}/llm/ask`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(inputText)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.text()
+      setMessages(`> User:\n${inputText}\n\n> AI Response:\n${result}`)
+      setInputText('')
+    } catch (error) {
+      console.error('Error sending message:', error)
+      setMessages(`> Error\n=====================================\n\n${error.message}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -46,10 +73,15 @@ function ChatInterface({ darkMode, fontSize }) {
         />
         <button
           onClick={handleSendMessage}
+          disabled={isLoading || !inputText.trim()}
           className={`flex items-center justify-center transition-colors font-bold ${
-            darkMode
-              ? 'bg-black text-green-400 hover:bg-green-500 hover:bg-opacity-10'
-              : 'bg-gray-900 text-green-500 hover:bg-green-400 hover:bg-opacity-10'
+            isLoading || !inputText.trim()
+              ? darkMode
+                ? 'bg-black text-green-800 cursor-not-allowed'
+                : 'bg-gray-900 text-green-800 cursor-not-allowed'
+              : darkMode
+                ? 'bg-black text-green-400 hover:bg-green-500 hover:bg-opacity-10'
+                : 'bg-gray-900 text-green-500 hover:bg-green-400 hover:bg-opacity-10'
           }`}
           style={{ width: '50px' }}
           title="Send Message"

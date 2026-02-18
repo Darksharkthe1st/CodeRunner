@@ -420,7 +420,7 @@ function App() {
                   />
                 </div>
               ) : (
-                <ChatInterface darkMode={darkMode} fontSize={fontSize} />
+                <ChatInterface darkMode={darkMode} fontSize={fontSize} apiUrl={apiUrl} />
               )}
             </div>
           </div>
