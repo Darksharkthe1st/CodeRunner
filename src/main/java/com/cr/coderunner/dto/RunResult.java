@@ -46,4 +46,15 @@ public class RunResult {
     public int hashCode() {
         return Objects.hash(success, (int)runtime, output, error, exitStatus);
     }
+
+    public String toString() {
+        return String.format("status: %s, success: %b, runtime: %f, output: %s, error: %s, exitStatus: %s}",
+                status, success, runtime, output, error, exitStatus);
+    }
+
+
+    public String displayStr() {
+        return String.format("===status: %s \n===output:\n%s\n===error:\n%s\n===exitStatus:\n%s\n",
+                status, output, error, exitStatus);
+    }
 }

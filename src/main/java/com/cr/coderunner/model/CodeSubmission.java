@@ -310,4 +310,13 @@ public class CodeSubmission {
         exec.output = outputs.toString();
         exec.error = errors.toString();
     }
+
+    public String displayStr() {
+        return String.format(
+                "===LANGUAGE:%s\n===CODE:\n%s\n===INPUT:\n%s\n",
+                language,
+                code,
+                input
+        );
+    }
 }

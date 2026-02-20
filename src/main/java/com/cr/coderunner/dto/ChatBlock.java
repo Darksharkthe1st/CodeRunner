@@ -10,4 +10,8 @@ public class ChatBlock {
         this.role = role;
         this.content = content;
     }
+
+    public String toString() {
+        return String.format("{%s : %s}", role, content);
+    }
 }
