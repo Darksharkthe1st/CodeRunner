@@ -61,7 +61,7 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
                 <div className={darkMode ? 'text-green-400' : 'text-green-500'}>
                   {'-------------------------------------'}
                 </div>
-                <div className={darkMode ? 'text-green-400' : 'text-green-500'} style={{ whiteSpace: 'pre-wrap' }}>
+                <div className={`${darkMode ? 'text-green-400' : 'text-green-500'} break-words`} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                   {runData.output || '(no output)'}
                 </div>
                 <div className={darkMode ? 'text-green-400' : 'text-green-500'}>
@@ -84,7 +84,7 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
                     <div className="text-red-500">
                       {'-------------------------------------'}
                     </div>
-                    <div className="text-red-400" style={{ whiteSpace: 'pre-wrap' }}>
+                    <div className="text-red-400 break-words" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                       {runData.error}
                     </div>
                     <div className="text-red-500">
@@ -100,7 +100,7 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
                     <div className={darkMode ? 'text-green-400' : 'text-green-500'}>
                       {'-------------------------------------'}
                     </div>
-                    <div className={darkMode ? 'text-green-400' : 'text-green-500'} style={{ whiteSpace: 'pre-wrap' }}>
+                    <div className={`${darkMode ? 'text-green-400' : 'text-green-500'} break-words`} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                       {runData.output}
                     </div>
                     <div className={darkMode ? 'text-green-400' : 'text-green-500'}>
@@ -128,10 +128,10 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
         style={scrollbarStyle}
       >
         <div
-          className={`p-4 font-mono whitespace-pre-wrap ${
+          className={`p-4 font-mono whitespace-pre-wrap break-words ${
             darkMode ? 'text-green-400' : 'text-green-500'
           }`}
-          style={{ fontSize: `${fontSize}px` }}
+          style={{ fontSize: `${fontSize}px`, overflowWrap: 'anywhere' }}
         >
           {output || '> Awaiting execution...'}
         </div>

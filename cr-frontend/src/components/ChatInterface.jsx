@@ -91,7 +91,7 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col min-h-0">
       {/* Non-editable Message Display Window (70%) */}
       <div
         className={`border-2 overflow-y-auto ${
@@ -100,7 +100,7 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
         style={{ height: '70%' }}
       >
         <div
-          className={`w-full p-4 font-mono whitespace-pre-wrap ${
+          className={`w-full p-4 font-mono whitespace-pre-wrap break-words overflow-wrap-anywhere ${
             darkMode ? 'text-green-400' : 'text-green-500'
           }`}
           style={{ fontSize: `${fontSize}px` }}

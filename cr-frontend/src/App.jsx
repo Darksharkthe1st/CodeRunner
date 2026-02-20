@@ -262,7 +262,7 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-black' : 'bg-gray-100'}`}>
+    <div className={`h-screen flex flex-col ${darkMode ? 'bg-black' : 'bg-gray-100'}`}>
       {/* Header */}
       <header className={`${darkMode ? 'bg-gray-950 border-b-2 border-green-500' : 'bg-gray-900 border-b-2 border-green-400'} text-white p-4 shadow-xl`}>
         <div className="flex justify-between items-center px-4">
