@@ -7,6 +7,14 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  // Custom scrollbar styles
+  const scrollbarStyle = {
+    scrollbarWidth: 'thin',
+    scrollbarColor: darkMode ? '#00FF00 #000000' : '#00CC00 #1a1a1a',
+  }
+
+  const scrollbarWebkitClass = darkMode ? 'terminal-scrollbar-dark' : 'terminal-scrollbar-light'
+
   const handleSendMessage = async () => {
     if (!inputText.trim()) return
 
@@ -96,8 +104,8 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
       <div
         className={`border-2 overflow-y-auto ${
           darkMode ? 'border-green-500 bg-black' : 'border-green-400 bg-gray-900'
-        }`}
-        style={{ height: '70%' }}
+        } ${scrollbarWebkitClass}`}
+        style={{ height: '70%', ...scrollbarStyle }}
       >
         <div
           className={`w-full p-4 font-mono whitespace-pre-wrap break-words overflow-wrap-anywhere ${
@@ -131,8 +139,8 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
           onChange={(e) => setInputText(e.target.value)}
           className={`flex-1 p-4 resize-none focus:outline-none font-mono border-r-2 ${
             darkMode ? 'bg-black text-green-400 border-green-500' : 'bg-gray-900 text-green-500 border-green-400'
-          }`}
-          style={{ fontSize: `${fontSize}px` }}
+          } ${scrollbarWebkitClass}`}
+          style={{ fontSize: `${fontSize}px`, ...scrollbarStyle }}
           placeholder="> Type your message here..."
           spellCheck="false"
         />

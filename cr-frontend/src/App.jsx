@@ -31,6 +31,14 @@ function App() {
 
   const apiUrl = import.meta.env.VITE_API_URL;
 
+  // Custom scrollbar styles
+  const scrollbarStyle = {
+    scrollbarWidth: 'thin',
+    scrollbarColor: darkMode ? '#00FF00 #000000' : '#00CC00 #1a1a1a',
+  }
+
+  const scrollbarWebkitClass = darkMode ? 'terminal-scrollbar-dark' : 'terminal-scrollbar-light'
+
   useEffect(() => {
     const fetchTemplate = async () => {
       try {
@@ -413,8 +421,8 @@ function App() {
                     onChange={(e) => setInputText(e.target.value)}
                     className={`w-full h-full p-4 resize-none focus:outline-none font-mono ${
                       darkMode ? 'bg-black text-green-400' : 'bg-gray-900 text-green-500'
-                    }`}
-                    style={{ fontSize: `${fontSize}px` }}
+                    } ${scrollbarWebkitClass}`}
+                    style={{ fontSize: `${fontSize}px`, ...scrollbarStyle }}
                     placeholder='> Enter input here...'
                     spellCheck="false"
                   />
