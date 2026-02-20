@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const SYSTEM_PROMPT = "You are Code_Helper, a sub-agent of Code_Runner, which is an online Remote Code Execution platform. You are given the user's code and a chat between the user, use the context to help them debug their code, pointing out design flaws, mistakes, and where errors may be arising from if present."
 
@@ -14,6 +16,51 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
   }
 
   const scrollbarWebkitClass = darkMode ? 'terminal-scrollbar-dark' : 'terminal-scrollbar-light'
+
+  // Terminal-style markdown components
+  const markdownComponents = {
+    h1: ({node, ...props}) => (
+      <h1 className={`font-mono font-bold text-xl mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+    h2: ({node, ...props}) => (
+      <h2 className={`font-mono font-bold text-lg mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+    h3: ({node, ...props}) => (
+      <h3 className={`font-mono font-bold text-base mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+    p: ({node, ...props}) => (
+      <p className={`font-mono mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+    code: ({node, inline, ...props}) => (
+      inline ?
+        <code className={`font-mono px-1 ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} /> :
+        <code className={`font-mono block p-2 my-2 ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} />
+    ),
+    pre: ({node, ...props}) => (
+      <pre className={`font-mono p-2 my-2 overflow-x-auto ${darkMode ? 'bg-gray-900 border border-green-500' : 'bg-gray-800 border border-green-400'}`} {...props} />
+    ),
+    a: ({node, ...props}) => (
+      <a className={`font-mono underline ${darkMode ? 'text-green-300 hover:text-green-200' : 'text-green-600 hover:text-green-700'}`} {...props} />
+    ),
+    ul: ({node, ...props}) => (
+      <ul className={`font-mono list-disc list-inside mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+    ol: ({node, ...props}) => (
+      <ol className={`font-mono list-decimal list-inside mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+    li: ({node, ...props}) => (
+      <li className={`font-mono ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+    blockquote: ({node, ...props}) => (
+      <blockquote className={`font-mono border-l-4 pl-4 my-2 italic ${darkMode ? 'border-green-500 text-green-400' : 'border-green-400 text-green-500'}`} {...props} />
+    ),
+    strong: ({node, ...props}) => (
+      <strong className={`font-mono font-bold ${darkMode ? 'text-green-300' : 'text-green-600'}`} {...props} />
+    ),
+    em: ({node, ...props}) => (
+      <em className={`font-mono italic ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+    ),
+  }
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return
@@ -108,19 +155,25 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
         style={{ height: '70%', ...scrollbarStyle }}
       >
         <div
-          className={`w-full p-4 font-mono whitespace-pre-wrap break-words overflow-wrap-anywhere ${
+          className={`w-full p-4 ${
             darkMode ? 'text-green-400' : 'text-green-500'
           }`}
           style={{ fontSize: `${fontSize}px` }}
         >
           {messages.length === 0 ? (
-            '> Code Helper\n> Ready to assist...'
+            <div className="font-mono whitespace-pre-wrap">> Code Helper{'\n'}> Ready to assist...</div>
           ) : (
             messages.map((msg, index) => (
-              <div key={index}>
-                {msg.role === 'user' ? '> User:\n' : '> AI Response:\n'}
-                {msg.content}
-                {index < messages.length - 1 && '\n\n'}
+              <div key={index} className="mb-4">
+                <div className="font-mono font-bold mb-1">
+                  {msg.role === 'user' ? '> User:' : '> AI Response:'}
+                </div>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={markdownComponents}
+                >
+                  {msg.content}
+                </ReactMarkdown>
               </div>
             ))
           )}
