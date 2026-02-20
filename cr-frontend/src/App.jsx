@@ -21,6 +21,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('Input')
   const [outputHeight, setOutputHeight] = useState(50) // Percentage of container height
   const [isDragging, setIsDragging] = useState(false)
+  const [chatMessages, setChatMessages] = useState([]) // Chat history for Code_Helper
 
   //Variables for polling tracking:
   const pollingIntervalRef = useRef(null);
@@ -436,6 +437,8 @@ function App() {
                   language={selectedLanguage}
                   input={inputText}
                   result={runData}
+                  messages={chatMessages}
+                  setMessages={setChatMessages}
                 />
               )}
             </div>

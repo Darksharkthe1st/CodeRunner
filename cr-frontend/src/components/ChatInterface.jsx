@@ -4,8 +4,7 @@ import remarkGfm from 'remark-gfm'
 
 const SYSTEM_PROMPT = "You are Code_Helper, a sub-agent of Code_Runner, which is an online Remote Code Execution platform. You are given the user's code and a chat between the user, use the context to help them debug their code, pointing out design flaws, mistakes, and where errors may be arising from if present."
 
-function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, result }) {
-  const [messages, setMessages] = useState([])
+function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, result, messages, setMessages }) {
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
