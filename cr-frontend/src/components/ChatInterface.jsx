@@ -17,16 +17,33 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
 
   const scrollbarWebkitClass = darkMode ? 'terminal-scrollbar-dark' : 'terminal-scrollbar-light'
 
+  // Styling constants
+  const HEADING_STEP = 3; // px increment per heading level
+  const HEADER_SIZE_OFFSET = 4; // px bigger than base font for role headers
+  const codeBlue = darkMode ? '#00BFFF' : '#0066CC'; // Match Monaco theme blue
+
   // Terminal-style markdown components
   const markdownComponents = {
     h1: ({node, ...props}) => (
-      <h1 className={`font-mono font-bold text-xl mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+      <h1
+        className={`font-mono font-bold mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`}
+        style={{ fontSize: `${fontSize + HEADING_STEP * 3}px` }}
+        {...props}
+      />
     ),
     h2: ({node, ...props}) => (
-      <h2 className={`font-mono font-bold text-lg mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+      <h2
+        className={`font-mono font-bold mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`}
+        style={{ fontSize: `${fontSize + HEADING_STEP * 2}px` }}
+        {...props}
+      />
     ),
     h3: ({node, ...props}) => (
-      <h3 className={`font-mono font-bold text-base mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+      <h3
+        className={`font-mono font-bold mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`}
+        style={{ fontSize: `${fontSize + HEADING_STEP}px` }}
+        {...props}
+      />
     ),
     p: ({node, ...props}) => (
       <p className={`font-mono ${darkMode ? 'text-green-400' : 'text-green-500'}`} style={{ marginBottom: '0.5em' }} {...props} />
@@ -35,9 +52,17 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
       // Check if this is inline code (not in a pre block)
       const isInline = inline !== false;
       return isInline ? (
-        <code className={`font-mono px-1 ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} />
+        <code
+          className={`font-mono font-bold px-1 ${darkMode ? 'bg-gray-900' : 'bg-gray-800'}`}
+          style={{ color: codeBlue }}
+          {...props}
+        />
       ) : (
-        <code className={`font-mono ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} />
+        <code
+          className={`font-mono font-bold ${darkMode ? 'bg-gray-900' : 'bg-gray-800'}`}
+          style={{ color: codeBlue }}
+          {...props}
+        />
       );
     },
     pre: ({node, ...props}) => (
@@ -169,7 +194,10 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
           ) : (
             messages.map((msg, index) => (
               <div key={index} className="mb-4">
-                <div className="font-mono font-bold mb-1">
+                <div
+                  className="font-mono font-extrabold mb-1 text-white"
+                  style={{ fontSize: `${fontSize + HEADER_SIZE_OFFSET}px` }}
+                >
                   {msg.role === 'user' ? '> User:' : '> AI Response:'}
                 </div>
                 <ReactMarkdown
