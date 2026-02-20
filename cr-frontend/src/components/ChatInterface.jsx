@@ -29,18 +29,22 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
       <h3 className={`font-mono font-bold text-base mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
     ),
     p: ({node, ...props}) => (
-      <p className={`font-mono mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+      <p className={`font-mono ${darkMode ? 'text-green-400' : 'text-green-500'}`} style={{ marginBottom: '0.5em' }} {...props} />
     ),
-    code: ({node, inline, ...props}) => (
-      inline ?
-        <code className={`font-mono px-1 ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} /> :
-        <code className={`font-mono block p-2 my-2 ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} />
-    ),
+    code: ({node, inline, className, ...props}) => {
+      // Check if this is inline code (not in a pre block)
+      const isInline = inline !== false;
+      return isInline ? (
+        <code className={`font-mono px-1 ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} />
+      ) : (
+        <code className={`font-mono ${darkMode ? 'text-green-300 bg-gray-900' : 'text-green-600 bg-gray-800'}`} {...props} />
+      );
+    },
     pre: ({node, ...props}) => (
-      <pre className={`font-mono p-2 my-2 overflow-x-auto ${darkMode ? 'bg-gray-900 border border-green-500' : 'bg-gray-800 border border-green-400'}`} {...props} />
+      <pre className={`font-mono p-3 my-2 overflow-x-auto ${darkMode ? 'bg-gray-900 border border-green-500' : 'bg-gray-800 border border-green-400'}`} {...props} />
     ),
     a: ({node, ...props}) => (
-      <a className={`font-mono underline ${darkMode ? 'text-green-300 hover:text-green-200' : 'text-green-600 hover:text-green-700'}`} {...props} />
+      <a className={`font-mono underline ${darkMode ? 'text-green-300 hover:text-green-200' : 'text-green-600 hover:text-green-700'}`} style={{ display: 'inline' }} {...props} />
     ),
     ul: ({node, ...props}) => (
       <ul className={`font-mono list-disc list-inside mb-2 ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
@@ -55,10 +59,10 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
       <blockquote className={`font-mono border-l-4 pl-4 my-2 italic ${darkMode ? 'border-green-500 text-green-400' : 'border-green-400 text-green-500'}`} {...props} />
     ),
     strong: ({node, ...props}) => (
-      <strong className={`font-mono font-bold ${darkMode ? 'text-green-300' : 'text-green-600'}`} {...props} />
+      <strong className={`font-mono font-bold ${darkMode ? 'text-green-300' : 'text-green-600'}`} style={{ display: 'inline' }} {...props} />
     ),
     em: ({node, ...props}) => (
-      <em className={`font-mono italic ${darkMode ? 'text-green-400' : 'text-green-500'}`} {...props} />
+      <em className={`font-mono italic ${darkMode ? 'text-green-400' : 'text-green-500'}`} style={{ display: 'inline' }} {...props} />
     ),
   }
 
