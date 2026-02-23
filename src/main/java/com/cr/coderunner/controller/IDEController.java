@@ -34,21 +34,16 @@ public class IDEController {
         return "Welcome to CodeRunner! Go to Route /submit to upload code and /check to view it.";
     }
 
-    //Created sample get mapping for testing purposes
-//    @GetMapping("/check")
-//    public CodeSubmission checkSubmission() {
-//        return userData.getLastSubmission();
-//    }
-
     //Submit to the executor, returns the ID used for tracking it
+    @Timed(value = "code.submit.time", description = "Time to submit code")
     @PostMapping("/submit")
     public String postSubmission(@RequestBody CodeSubmission codeSubmission) throws InterruptedException {
         return executionService.execute(new CodeExecution(codeSubmission));
     }
 
+    @Timed(value = "code.check.time")
     @PostMapping("/check")
     public RunResult checkSubmission(@RequestBody String execID) {
-//        System.out.println("execID: " + execID);
         return executionService.checkExecution(execID);
     }
 
@@ -109,19 +104,19 @@ public class IDEController {
 
     }
 
-    @PostMapping("/set_logging")
-    public void setLogging(@RequestParam boolean loggingOn) {
-        loggerOn = loggingOn;
-    }
-
-    @PostMapping("/set_pausing")
-    public void setPausingOn(@RequestParam boolean pausingOn) {
-        pauserOn = pausingOn;
-    }
-
-    @PostMapping("/resume")
-    public void resume() {
-        waiting = false;
-    }
+//    @PostMapping("/set_logging")
+//    public void setLogging(@RequestParam boolean loggingOn) {
+//        loggerOn = loggingOn;
+//    }
+//
+//    @PostMapping("/set_pausing")
+//    public void setPausingOn(@RequestParam boolean pausingOn) {
+//        pauserOn = pausingOn;
+//    }
+//
+//    @PostMapping("/resume")
+//    public void resume() {
+//        waiting = false;
+//    }
 
 }

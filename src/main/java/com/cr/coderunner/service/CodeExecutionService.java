@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.UUID;
@@ -16,12 +17,12 @@ public class CodeExecutionService {
     //Arbitrarily we pick to have 10 threads executing
     private static final int threadCount = 10;
 
-    private final HashMap<String, CodeExecution> results;
+    private final ConcurrentHashMap<String, CodeExecution> results;
     private final ExecutorService executor;
 
     public CodeExecutionService() {
         this.executor = Executors.newFixedThreadPool(threadCount);
-        this.results = new HashMap<>();
+        this.results = new ConcurrentHashMap<>();
     }
 
     public String execute(CodeExecution execution) {

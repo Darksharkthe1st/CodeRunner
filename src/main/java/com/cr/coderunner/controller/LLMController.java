@@ -16,12 +16,6 @@ public class LLMController {
         this.geminiService = geminiService;
     }
 
-    @PostMapping("/ask")
-    public String askLLM(@RequestBody String prompt) {
-//        return geminiService.askGemini(prompt);
-        return "Howdy";
-    }
-
     @PostMapping("/message")
     public String messagePrompt(@RequestBody UserChat chat) {
         System.out.println(Arrays.toString(chat.getMessages().toArray()));
