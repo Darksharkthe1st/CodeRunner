@@ -122,6 +122,8 @@ public class CodeSubmission {
         ProcessBuilder processBuilder = new ProcessBuilder();
         Process process;
 
+        //System.out.println("Step 1");
+
         //Blank values for now:
         exec.success = false;
         exec.runtime = -1;
@@ -131,6 +133,8 @@ public class CodeSubmission {
 
         //Build code (AKA write data to files);
         File dirFile = build(processBuilder, exec);
+
+        //System.out.println("Step 2");
 
         //If build failed, stop running
         if (dirFile == null) {
@@ -145,13 +149,18 @@ public class CodeSubmission {
             return;
         }
 
+        //System.out.println("Step 3");
+
         //TODO: use Docker to ensure dev env has all needed build tools
 
         //Run the process, wait until complete
         runProcess(process, processBuilder, exec, language, dirFile);
+
+        //System.out.println("Step 4");
+
         closeRun(dirFile, exec, "");
 
-
+        //System.out.println("Step 5");
     }
 
     public void closeRun(File dirFile, CodeExecution exec, String newStatus) {
@@ -199,6 +208,7 @@ public class CodeSubmission {
         StringBuilder outputs = new StringBuilder();
         StringBuilder errors = new StringBuilder();
 
+        //System.out.println("Part 0");
 
         exec.exitStatus = "";
 
@@ -244,9 +254,13 @@ public class CodeSubmission {
             }
         };
 
+        //System.out.println("Part 1");
+
         //Begin reading stdout
         readOut.start();
         readErr.start();
+
+        //System.out.println("Part 2");
 
         //wait for the process to finish
         try {
@@ -259,6 +273,8 @@ public class CodeSubmission {
         if (process.isAlive()) {
             exec.exitStatus += "Time Limit Exceeded.\n";
         }
+
+        //System.out.println("Part 3");
 
         try {
             // Stop and remove the container by name (dirFile => container name), wait until fully removed
@@ -281,6 +297,8 @@ public class CodeSubmission {
             }
         }
 
+        //System.out.println("Part 4");
+
         IDEController.logText("Processes killed.");
 
         //If the process exited improperly and an error wasn't caught, note it
@@ -290,26 +308,44 @@ public class CodeSubmission {
             exec.exitStatus += "Program exited with incorrect return value: " + process.exitValue() + "\n";
         }
 
+        //System.out.println("Part 5");
+
         //Stop reading input/error data, close buffers
         try {
-            readOut.join();
-            readErr.join();
+            readOut.join(5000);
+            readErr.join(5000);
             outputBuffer.close();
             errorBuffer.close();
         } catch (InterruptedException | IOException e) {
             exec.exitStatus += "Failed to read stdout/stderr.\n";
         }
 
+        //System.out.println("Part 6");
+
         //Show the user the error message if it comes up
         if (!exec.exitStatus.isEmpty()) {
             outputs.append("\n====ERROR(S):");
             outputs.append(exec.exitStatus);
-            throw new RuntimeException("Failure: " + exec.exitStatus);
         }
+
+        //System.out.println("Part 7");
 
         //Save the final output
         exec.output = outputs.toString();
         exec.error = errors.toString();
+
+        //Add size limits to avoid causing app slowdowns
+        if (exec.output.length() > 1_000_000) {
+            exec.output = exec.output.substring(0, 1_000_000)
+                    + "\n\n[Output truncated, 1MB Limit Exceeded]";
+        }
+
+        if (exec.error.length() > 1_000_000) {
+            exec.error = exec.error.substring(0, 1_000_000)
+                    + "\n\n[Error truncated, 1MB Limit Exceeded]";
+        }
+
+        //System.out.println("Part 8");
     }
 
     public String displayStr() {

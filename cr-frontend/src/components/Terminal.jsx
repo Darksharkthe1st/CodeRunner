@@ -1,6 +1,19 @@
 import ExecutingAnimation from './ExecutingAnimation'
 
 function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
+  // Maximum output size to prevent browser hang (500KB)
+  const MAX_OUTPUT_SIZE = 500 * 1024
+
+  // Truncate large outputs to prevent browser freezes
+  const truncateOutput = (text) => {
+    if (!text) return text
+    if (text.length <= MAX_OUTPUT_SIZE) return text
+
+    const truncated = text.substring(0, MAX_OUTPUT_SIZE)
+    return truncated + '\n\n[... Output truncated - exceeded 500KB limit. Total size: ' +
+           Math.round(text.length / 1024) + 'KB]'
+  }
+
   // Custom scrollbar styles
   const scrollbarStyle = {
     scrollbarWidth: 'thin',
@@ -62,7 +75,7 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
                   {'-------------------------------------'}
                 </div>
                 <div className={`${darkMode ? 'text-green-400' : 'text-green-500'} break-words`} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                  {runData.output || '(no output)'}
+                  {truncateOutput(runData.output) || '(no output)'}
                 </div>
                 <div className={darkMode ? 'text-green-400' : 'text-green-500'}>
                   {'-------------------------------------'}
@@ -85,7 +98,7 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
                       {'-------------------------------------'}
                     </div>
                     <div className="text-red-400 break-words" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                      {runData.error}
+                      {truncateOutput(runData.error)}
                     </div>
                     <div className="text-red-500">
                       {'-------------------------------------'}
@@ -101,7 +114,7 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
                       {'-------------------------------------'}
                     </div>
                     <div className={`${darkMode ? 'text-green-400' : 'text-green-500'} break-words`} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                      {runData.output}
+                      {truncateOutput(runData.output)}
                     </div>
                     <div className={darkMode ? 'text-green-400' : 'text-green-500'}>
                       {'-------------------------------------'}
@@ -133,7 +146,7 @@ function Terminal({ output, darkMode, fontSize, runData, isExecuting }) {
           }`}
           style={{ fontSize: `${fontSize}px`, overflowWrap: 'anywhere' }}
         >
-          {output || '> Awaiting execution...'}
+          {truncateOutput(output) || '> Awaiting execution...'}
         </div>
       </div>
     </div>

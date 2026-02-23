@@ -189,7 +189,7 @@ function ChatInterface({ darkMode, fontSize, apiUrl, code, language, input, resu
           style={{ fontSize: `${fontSize}px` }}
         >
           {messages.length === 0 ? (
-            <div className="font-mono whitespace-pre-wrap">> Code Helper{'\n'}> Ready to assist...</div>
+            <div className="font-mono whitespace-pre-wrap">{'>'} Code Helper{'\n'}{'>'} Ready to assist...</div>
           ) : (
             messages.map((msg, index) => (
               <div key={index} className="mb-4">

@@ -3,7 +3,7 @@ import CodeEditor from './components/CodeEditor'
 import Terminal from './components/Terminal'
 import Alert from './components/Alert'
 import ChatInterface from './components/ChatInterface'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 const SUPPORTED_LANGUAGES = ["Java", "Python", "C"]
 
@@ -266,9 +266,9 @@ function App() {
     setFontSize(prev => Math.max(prev - 2, 8))
   }
 
-  const handleCloseAlert = () => {
+  const handleCloseAlert = useCallback(() => {
     setAlertData({ show: false, success: false, exitStatus: '' })
-  }
+  }, [])
 
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'bg-black' : 'bg-gray-100'}`}>
