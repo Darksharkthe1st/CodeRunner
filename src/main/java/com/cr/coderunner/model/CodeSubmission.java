@@ -74,7 +74,8 @@ public class CodeSubmission {
         if (execDir.mkdir())
             IDEController.logText("testing directory not detected; new directory created.");
 
-        //Files for code/input to be pulled from
+        //Files for code/input
+        // to be pulled from
         File dirFile, codeFile, inputFile;
 
         try {
