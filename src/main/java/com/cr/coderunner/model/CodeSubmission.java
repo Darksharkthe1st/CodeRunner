@@ -180,7 +180,7 @@ public class CodeSubmission {
 
         closeRun(dirFile, exec, "");
 
-        System.out.println("Step 5");
+        //System.out.println("Step 5");
     }
 
     public void closeRun(File dirFile, CodeExecution exec, String newStatus) {
@@ -230,7 +230,7 @@ public class CodeSubmission {
         StringBuilder outputs = new StringBuilder();
         StringBuilder errors = new StringBuilder();
 
-        //System.out.println("Part 0");
+        ////System.out.println("Part 0");
 
         exec.exitStatus = "";
 
@@ -276,13 +276,13 @@ public class CodeSubmission {
             }
         };
 
-        System.out.println("Part 1");
+        //System.out.println("Part 1");
 
         //Begin reading stdout
         readOut.start();
         readErr.start();
 
-        System.out.println("Part 2");
+        //System.out.println("Part 2");
 
         //wait for the process to finish
         try {
@@ -296,7 +296,7 @@ public class CodeSubmission {
             exec.exitStatus += "Time Limit Exceeded.\n";
         }
 
-        System.out.println("Part 3");
+        //System.out.println("Part 3");
 
         try {
             // Stop and remove the container by name (dirFile => container name), wait until fully removed
@@ -321,7 +321,7 @@ public class CodeSubmission {
             }
         }
 
-        System.out.println("Part 4");
+        //System.out.println("Part 4");
 
         IDEController.logText("Processes killed.");
 
@@ -332,7 +332,7 @@ public class CodeSubmission {
             exec.exitStatus += "Program exited with incorrect return value: " + process.exitValue() + "\n";
         }
 
-        System.out.println("Part 5");
+        //System.out.println("Part 5");
 
         //Stop reading input/error data, close buffers
         try {
@@ -344,7 +344,7 @@ public class CodeSubmission {
             exec.exitStatus += "Failed to read stdout/stderr.\n";
         }
 
-        System.out.println("Part 6");
+        //System.out.println("Part 6");
 
         //Show the user the error message if it comes up
         if (!exec.exitStatus.isEmpty()) {
@@ -352,7 +352,7 @@ public class CodeSubmission {
             outputs.append(exec.exitStatus);
         }
 
-        System.out.println("Part 7");
+        //System.out.println("Part 7");
 
         //Save the final output
         exec.output = outputs.toString();
@@ -369,7 +369,7 @@ public class CodeSubmission {
                     + "\n\n[Error truncated, 1MB Limit Exceeded]";
         }
 
-        System.out.println("Part 8");
+        //System.out.println("Part 8");
     }
 
     public String displayStr() {

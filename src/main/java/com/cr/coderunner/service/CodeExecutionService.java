@@ -60,7 +60,7 @@ public class CodeExecutionService {
     }
 
     public String listExecutions() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (String id : results.keySet()) {
             sb.append("{").append(id).append(" : ").append(results.get(id).done).append("}\n");
         }

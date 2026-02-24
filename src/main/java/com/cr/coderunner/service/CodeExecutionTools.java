@@ -21,7 +21,7 @@ public class CodeExecutionTools {
 
     @Tool("Execute code and return the output. Use this to test or verify code, this does NOT modify the user's code (you need to tell them the new code so they can copy it themselves).")
     public String executeCode(String code, String language, String input) {
-        System.out.println("LLM Executing code " + code + " with language " + language);
+//        System.out.println("LLM Executing code " + code + " with language " + language);
         language = language.toLowerCase();
         CodeSubmission submission = new CodeSubmission(code, language, "ONE", input);
 
@@ -39,7 +39,7 @@ public class CodeExecutionTools {
             count += 1;
             result = executionService.checkExecution(UUID);
         }
-        System.out.println(result.displayStr());
+//        System.out.println(result.displayStr());
         return result.displayStr();
     }
 
