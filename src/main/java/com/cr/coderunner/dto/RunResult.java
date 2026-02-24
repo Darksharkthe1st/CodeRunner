@@ -57,4 +57,33 @@ public class RunResult {
         return String.format("===status: %s \n===output:\n%s\n===error:\n%s\n===exitStatus:\n%s\n",
                 status, output, error, exitStatus);
     }
+
+    //Truncated outputs to avoid overloading LLM
+    public String displayStrShorter() {
+        String tempStatus, tempOutput, tempError, tempExitStatus;
+        tempStatus = status;
+        tempOutput = output;
+        tempError = error;
+        tempExitStatus = exitStatus;
+
+        if (status.length() > 1_000) {
+            tempStatus = status.substring(1_000);
+            tempStatus += "\n[Output Truncated]";
+        }
+        if (error.length() > 1_000) {
+            tempError = error.substring(0, 1_000);
+            tempError += "\n[Error Truncated]";
+        }
+        if (exitStatus.length() > 1_000) {
+            tempExitStatus = exitStatus.substring(0, 1_000);
+            tempExitStatus += "\n[Exit Status Truncated]";
+        }
+        if (output.length() > 1_000) {
+            tempOutput = output.substring(0, 1_000);
+            tempOutput += "\n[Output Truncated]";
+        }
+
+        return String.format("===status: %s \n===output:\n%s\n===error:\n%s\n===exitStatus:\n%s\n",
+                tempStatus, tempOutput, tempError, tempExitStatus);
+    }
 }

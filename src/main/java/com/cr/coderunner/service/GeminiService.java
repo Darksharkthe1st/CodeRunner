@@ -19,19 +19,24 @@ import java.util.stream.Collectors;
 @Service
 public class GeminiService {
 //    private final Client client;
-    private final GoogleAiGeminiChatModel geminiChatModel;
-    private final String modelName = "gemini-2.5-flash-lite";
+//    private final GoogleAiGeminiChatModel geminiChatModel;
+//    private final String modelName = "gemini-2.5-flash-lite";
+    private final CodeHelperAssistant assistant;
 
-    public GeminiService(@Value("${gemini.api.key}") String apiKey) {
-        geminiChatModel = GoogleAiGeminiChatModel.builder()
-                .modelName(modelName)
-                .apiKey(apiKey)
-                .build();
+    public GeminiService(CodeHelperAssistant assistant) {
+        this.assistant = assistant;
     }
 
+//    public GeminiService(@Value("${gemini.api.key}") String apiKey) {
+//        geminiChatModel = GoogleAiGeminiChatModel.builder()
+//                .modelName(modelName)
+//                .apiKey(apiKey)
+//                .build();
+//    }
+
     public String messageModel(List<ChatMessage> messages) {
-        ChatResponse response = geminiChatModel.chat(messages);
-        return response.aiMessage().text();
+//        ChatResponse response = geminiChatModel.chat(messages);
+        return assistant.chat(messages);
     }
 //
 //    public GeminiService() {

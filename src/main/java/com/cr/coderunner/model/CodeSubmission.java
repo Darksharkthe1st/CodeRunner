@@ -32,15 +32,16 @@ public class CodeSubmission {
         }
         this.code = code;
         this.input = input;
+        language = language.toLowerCase();
         this.language = language;
         this.problemName = problemName;
     }
 
     public String getExtensionByLang(String language) {
         return switch (language) {
-            case "Java" -> ".java";
-            case "C" -> ".c";
-            case "Python" -> ".py";
+            case "java" -> ".java";
+            case "c" -> ".c";
+            case "python" -> ".py";
             default -> null;
         };
     }
@@ -48,9 +49,9 @@ public class CodeSubmission {
     public List<String> getCommandByFiles(String language, File codeFile, File dirFile, File inputFile) {
         List<String> cmds = new java.util.ArrayList<>(List.of("docker", "run", "--name", dirFile.getName(), /*, "--pids-limit=64", "--memory=256m", "--cpus=0.5",*/ "--rm", "-v", dirFile.getAbsolutePath() + ":/sandbox"));
         cmds.addAll(switch (language) {
-            case "C" -> List.of("alpine:latest", "sh", "-c", "apk add --no-cache gcc musl-dev > none.txt && " + "gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName());
-            case "Python" -> List.of("python:3.12-alpine", "sh", "-c", "python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
-            case "Java" -> List.of("eclipse-temurin:21-alpine", "sh", "-c", "java sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
+            case "c" -> List.of("alpine:latest", "sh", "-c", "apk add --no-cache gcc musl-dev > none.txt && " + "gcc sandbox/" + codeFile.getName() + " -o sandbox/main && ./sandbox/main < sandbox/" + inputFile.getName());
+            case "python" -> List.of("python:3.12-alpine", "sh", "-c", "python3 sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
+            case "java" -> List.of("eclipse-temurin:21-alpine", "sh", "-c", "java sandbox/" + codeFile.getName() + " < sandbox/" + inputFile.getName());
             default -> List.of("FAILURE");
         });
         if (cmds.getLast().equals("FAILURE")) {
@@ -61,18 +62,30 @@ public class CodeSubmission {
     }
 
     public File build(ProcessBuilder processBuilder, CodeExecution exec) {
+
+        System.out.println("==Part 0");
         //Get the current directory
         File userDir = new File(System.getProperty("user.dir"));
         File execDir = new File(userDir, ".test");
 
+        System.out.println("==Part 1");
         //Check if the extension is valid and save it
         String extension = getExtensionByLang(this.language);
-        if (extension == null)
-            throw new InputMismatchException(this.language + " is not a supported language in CodeRunner.");
+        if (extension == null) {
+            exec.exitStatus += this.language + " is not a supported language in CodeRunner. SUPPORTED: python, java, c\n";
+            exec.failed = true;
+            return null;
+        }
+
+
+
+        System.out.println("==Part 2");
 
         //Make a new directory if needed
         if (execDir.mkdir())
             IDEController.logText("testing directory not detected; new directory created.");
+
+        System.out.println("==Part 3");
 
         //Files for code/input
         // to be pulled from
@@ -104,12 +117,16 @@ public class CodeSubmission {
             return null;
         }
 
+        System.out.println("==Part 4");
+
 //        processBuilder.redirectInput(inputFile);
         processBuilder.directory(execDir);
 
         IDEController.logText("Running code on enter.");
         //Run different execution methods for different languages
         processBuilder.command(getCommandByFiles(language, codeFile, dirFile, inputFile));
+
+        System.out.println("==Part 5");
 
         return dirFile;
     }
@@ -122,7 +139,7 @@ public class CodeSubmission {
         ProcessBuilder processBuilder = new ProcessBuilder();
         Process process;
 
-        //System.out.println("Step 1");
+        System.out.println("Step 1");
 
         //Blank values for now:
         exec.success = false;
@@ -133,8 +150,11 @@ public class CodeSubmission {
 
         //Build code (AKA write data to files);
         File dirFile = build(processBuilder, exec);
-
-        //System.out.println("Step 2");
+        if (dirFile == null) {
+            closeRun(dirFile, exec, "");
+            return;
+        }
+        System.out.println("Step 2");
 
         //If build failed, stop running
         if (dirFile == null) {
@@ -149,18 +169,18 @@ public class CodeSubmission {
             return;
         }
 
-        //System.out.println("Step 3");
+        System.out.println("Step 3");
 
         //TODO: use Docker to ensure dev env has all needed build tools
 
         //Run the process, wait until complete
         runProcess(process, processBuilder, exec, language, dirFile);
 
-        //System.out.println("Step 4");
+        System.out.println("Step 4");
 
         closeRun(dirFile, exec, "");
 
-        //System.out.println("Step 5");
+        System.out.println("Step 5");
     }
 
     public void closeRun(File dirFile, CodeExecution exec, String newStatus) {
@@ -171,20 +191,22 @@ public class CodeSubmission {
         //Print out latest error for testing purposes
         IDEController.logText("====ERR:\n" + exec.error);
 
-        //Delete temporary files, if possible
-        try {
-            FileUtils.cleanDirectory(dirFile);
-        } catch (IOException e) {
-            exec.exitStatus += "code files failed to delete; terminating";
-            e.printStackTrace();
-            return;
-        }
+        if (dirFile != null) {
+            //Delete temporary files, if possible
+            try {
+                FileUtils.cleanDirectory(dirFile);
+            } catch (IOException e) {
+                exec.exitStatus += "code files failed to delete; terminating";
+                e.printStackTrace();
+                return;
+            }
 
-        try {
-            Files.delete(dirFile.toPath());
-        } catch (IOException e) {
-            exec.exitStatus += "Failed to delete temp directory; System issues.";
-            return;
+            try {
+                Files.delete(dirFile.toPath());
+            } catch (IOException e) {
+                exec.exitStatus += "Failed to delete temp directory; System issues.";
+                return;
+            }
         }
 
         if (!exec.error.isEmpty()) {
@@ -254,13 +276,13 @@ public class CodeSubmission {
             }
         };
 
-        //System.out.println("Part 1");
+        System.out.println("Part 1");
 
         //Begin reading stdout
         readOut.start();
         readErr.start();
 
-        //System.out.println("Part 2");
+        System.out.println("Part 2");
 
         //wait for the process to finish
         try {
@@ -274,7 +296,7 @@ public class CodeSubmission {
             exec.exitStatus += "Time Limit Exceeded.\n";
         }
 
-        //System.out.println("Part 3");
+        System.out.println("Part 3");
 
         try {
             // Stop and remove the container by name (dirFile => container name), wait until fully removed
@@ -293,11 +315,13 @@ public class CodeSubmission {
             try {
                 Thread.sleep(200);
             } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
+                exec.failed = true;
+                exec.exitStatus += ex.getMessage();
+                return;
             }
         }
 
-        //System.out.println("Part 4");
+        System.out.println("Part 4");
 
         IDEController.logText("Processes killed.");
 
@@ -308,7 +332,7 @@ public class CodeSubmission {
             exec.exitStatus += "Program exited with incorrect return value: " + process.exitValue() + "\n";
         }
 
-        //System.out.println("Part 5");
+        System.out.println("Part 5");
 
         //Stop reading input/error data, close buffers
         try {
@@ -320,7 +344,7 @@ public class CodeSubmission {
             exec.exitStatus += "Failed to read stdout/stderr.\n";
         }
 
-        //System.out.println("Part 6");
+        System.out.println("Part 6");
 
         //Show the user the error message if it comes up
         if (!exec.exitStatus.isEmpty()) {
@@ -328,7 +352,7 @@ public class CodeSubmission {
             outputs.append(exec.exitStatus);
         }
 
-        //System.out.println("Part 7");
+        System.out.println("Part 7");
 
         //Save the final output
         exec.output = outputs.toString();
@@ -345,7 +369,7 @@ public class CodeSubmission {
                     + "\n\n[Error truncated, 1MB Limit Exceeded]";
         }
 
-        //System.out.println("Part 8");
+        System.out.println("Part 8");
     }
 
     public String displayStr() {
