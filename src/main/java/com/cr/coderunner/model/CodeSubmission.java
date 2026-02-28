@@ -150,16 +150,12 @@ public class CodeSubmission {
 
         //Build code (AKA write data to files);
         File dirFile = build(processBuilder, exec);
+        //If build failed, stop running
         if (dirFile == null) {
-            closeRun(dirFile, exec, "");
+            closeRun(null, exec, "");
             return;
         }
         System.out.println("Step 2");
-
-        //If build failed, stop running
-        if (dirFile == null) {
-            return;
-        }
 
         //Try to start the process
         try {
