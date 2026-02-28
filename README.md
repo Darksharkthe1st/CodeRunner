@@ -1,60 +1,45 @@
 # CodeRunner
 
-A full-stack web-based IDE that allows users to write, compile, and execute code in multiple programming languages directly in their browser. Built with React and Spring Boot, CodeRunner provides a safe, containerized execution environment using Docker, enhanced with AI-powered code assistance.
+Full-stack web IDE for writing, compiling, and executing code in multiple languages. Built with **React** and **Spring Boot** with **Docker** containerization and **LangChain4j AI agent** for intelligent code assistance.
 
-Access ***LIVE*** at **[https://code-runner-eta.vercel.app/](https://code-runner-eta.vercel.app/)**
+**LIVE**: [https://code-runner-eta.vercel.app/](https://code-runner-eta.vercel.app/)
 
 ## Features
 
 ### Core Functionality
-- **Multi-Language Support**: Currently supports Java, Python, and C with full execution capabilities
-- **Real-Time Code Execution**: Write code and see results instantly with asynchronous processing
-- **Syntax Highlighting**: Custom regex-based syntax highlighter for all supported languages
-- **Safe Execution Environment**: Docker containerization for C/C++/Python code provides isolated execution
-- **Input/Output Handling**: Support for custom input via stdin with dedicated input panel
-- **Code Templates**: Quick-start templates for each supported language
-- **Execution Limits**: 60-second timeout and output size limits to prevent abuse
+- **Multi-Language Support**: Java, Python, and C with full execution
+- **Asynchronous Execution**: 10-worker thread pool with UUID-based polling
+- **Docker Containerization**: Isolated execution environment for all languages
+- **Syntax Highlighting**: Custom regex-based highlighter
+- **60s Timeout & Output Limits**: Protection against abuse and memory overflow
 
 ### AI-Powered Code Assistant
-- **Code_Helper Agent**: LangChain4j-powered AI agent using Google Gemini 2.5 Flash
-- **Autonomous Testing**: Agent can execute code independently to verify fixes using `@Tool` methods
-- **Context-Aware**: Understands your code, language, input, and execution results
-- **Persistent Chat**: Multi-turn conversations that persist across tab switches
-- **Markdown Support**: Rich text formatting with syntax highlighting in responses
-- **Debug Assistance**: Get help identifying bugs, design flaws, and errors with AI-verified solutions
-- **Real-time Help**: Chat interface for interactive code debugging and learning
-- **Tool Invocation**: Agent autonomously decides when to test code (used sparingly per system prompt)
+- **LangChain4j Agent**: Google Gemini 2.5 Flash with @AiService and @Tool annotations
+- **Autonomous Code Testing**: Agent can execute test code to verify fixes
+- **Context-Aware**: Full access to code, chat history, and execution results
+- **Read-Only Design**: Suggests fixes, user manually applies changes
+- **Markdown Rendering**: Syntax-highlighted responses in chat interface
 
 ### User Interface
-- **Responsive UI**: Clean, two-column layout with code editor and output console
-- **Dark/Light Mode**: Toggle between terminal-style themes
-- **Adjustable Font Size**: Zoom in/out controls for comfortable reading
-- **Resizable Panels**: Draggable divider to adjust output/input panel heights
-- **Tab Interface**: Switch between Input and Code_Helper tabs seamlessly
-- **Error Handling**: Comprehensive error capture with visual alerts for compilation and runtime errors
+- **Split-Pane Layout**: Code editor + output console with resizable dividers
+- **Dark/Light Mode**: Terminal-style theme toggle
+- **Tab Interface**: Input and Code_Helper tabs with persistent chat
+- **Font Adjustments**: Zoom controls for comfortable reading
+- **Visual Feedback**: Execution animations and error alerts
 
 ## Tech Stack
 
 ### Frontend
-- **React 19** - UI framework
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **react-markdown** - Markdown rendering for AI responses
-- **remark-gfm** - GitHub Flavored Markdown support
-- **Custom Syntax Highlighter** - Regex-based highlighting for C, C++, Java, Python
+- **React 19** + **Vite** + **Tailwind CSS**
+- **react-markdown** + **remark-gfm** for AI response rendering
+- Custom regex-based syntax highlighter
 
 ### Backend
-- **Spring Boot 4.0.1** - REST API framework with @Scheduled task support
-- **Java 21** - Backend runtime (targets Java 25 for compilation)
-- **Docker** - Containerized code execution for all languages
-- **Maven** - Build and dependency management
-- **LangChain4j Spring Boot Starter 1.11.0-beta19** - AI agent framework with @AiService and @Tool
-- **LangChain4j Google AI Gemini 1.11.0** - Gemini model integration
-- **Google Gemini 2.5 Flash** - LLM for agent-based code assistance
-- **ExecutorService** - Fixed thread pool (10 workers) for async execution queue
-- **ConcurrentHashMap** - Thread-safe execution tracking
-- **Spring Boot Actuator** - Health monitoring and metrics
-- **Micrometer Prometheus** - Metrics collection
+- **Spring Boot 4.0.1** + **Java 21** + **Maven**
+- **Docker** for containerized code execution
+- **LangChain4j 1.11.0-beta19** with @AiService and @Tool support
+- **Google Gemini 2.5 Flash** LLM integration
+- **ExecutorService** (10-worker thread pool) + **ConcurrentHashMap** for async queue
 
 ## Architecture
 
@@ -62,39 +47,25 @@ CodeRunner uses a modern **asynchronous execution queue model** with **LangChain
 
 ### Execution Service & Queue Model
 
-The backend uses `CodeExecutionService` with a fixed thread pool to handle concurrent code executions:
-
 ```
 User Submission → UUID Generated → Submitted to Queue (10 worker threads) →
 Async Execution → Docker Container → Output Collection →
 Poll for Results (RUNNING/FINISHED) → Cleanup
 ```
 
-**Key Features**:
-- **Fixed Thread Pool**: 10 concurrent execution workers using Java `ExecutorService`
-- **ConcurrentHashMap**: Thread-safe UUID-based execution tracking
-- **Polling Model**: Frontend polls `/check` endpoint with UUID for status updates
-- **Scheduled Cleanup**: Automatic removal of expired executions every 30 seconds (60+ second old results)
-- **Non-blocking**: Submit endpoint returns immediately with UUID for tracking
+- 10-worker `ExecutorService` thread pool for concurrent executions
+- UUID-based tracking with `ConcurrentHashMap`
+- Non-blocking submit, frontend polls `/check` every 500ms
+- Scheduled cleanup removes executions older than 60s (runs every 30s)
 
 ### Request Flow (IDE Execution)
-1. User writes code in the browser editor
-2. Frontend sends code + language to `POST /submit` endpoint
-3. `CodeExecutionService` creates `CodeExecution` thread, assigns UUID, submits to thread pool
-4. UUID returned immediately to frontend (non-blocking)
-5. Frontend polls `POST /check` endpoint with UUID every 500ms
-6. Worker thread executes code in Docker container:
-   - **Java**: `eclipse-temurin:21-alpine` container
-   - **Python**: `python:3.12-alpine` container
-   - **C**: `alpine:latest` + GCC compilation
-7. Output streamed through multi-threaded readers (stdout/stderr)
-8. Results stored in `CodeExecution` object, marked as FINISHED
-9. Frontend receives complete `RunResult` DTO on next poll
-10. Execution removed from queue after retrieval or expires after 60 seconds
+1. Frontend → `POST /submit` → `CodeExecutionService` creates thread + UUID
+2. UUID returned immediately (non-blocking)
+3. Frontend polls `POST /check` with UUID every 500ms
+4. Worker executes in Docker (Java/Python/C containers)
+5. Results returned as `RunResult` with status: RUNNING/FINISHED/NONEXISTENT
 
 ### AI Assistant Flow (Agent with Tool Invocation)
-
-CodeRunner integrates **LangChain4j Spring Boot** with a custom agent (`CodeHelperAssistant`) that can **test code autonomously**:
 
 ```
 User Message → /llm/message → GeminiService → CodeHelperAssistant.chat() →
@@ -104,13 +75,11 @@ Tool submits to same execution queue → Poll for results → Tool returns outpu
 Agent interprets results → Generates debugging advice → Returns to user
 ```
 
-**Key Features**:
-- **@AiService Interface**: `CodeHelperAssistant` is a LangChain4j agent interface with system prompt
-- **Tool Invocation**: Agent can call `@Tool` methods in `CodeExecutionTools` to test code
-- **Context Awareness**: Receives full chat history, current code, language, input, and execution results
-- **Autonomous Testing**: Agent decides when to execute code to verify fixes (use sparingly per system prompt)
-- **Read-Only Design**: Agent cannot modify user code directly, only suggests fixes
-- **Output Truncation**: Tool results limited to 1MB to prevent token overflow
+- `CodeHelperAssistant` (@AiService) with system prompt defines agent behavior
+- Agent invokes `@Tool` methods to autonomously test code
+- Full context awareness: chat history + code + execution results
+- Read-only design: suggests fixes, doesn't modify user code
+- Output truncated to 1MB to prevent token overflow
 
 ### Agent Architecture
 
@@ -118,37 +87,20 @@ Agent interprets results → Generates debugging advice → Returns to user
 ┌─────────────────────────────────────────────────────────────┐
 │                    LangChain4j Framework                     │
 ├─────────────────────────────────────────────────────────────┤
-│                                                              │
 │  CodeHelperAssistant (@AiService)                           │
-│  ├── System Prompt: "You are Code_Helper..."               │
-│  ├── chat(List<ChatMessage>) method                         │
-│  └── Automatically wired to ChatModel bean                  │
+│  ├── System Prompt + chat(List<ChatMessage>)               │
+│  └── Auto-wired to ChatModel bean                           │
 │                                                              │
 │  CodeExecutionTools (@Component)                            │
 │  ├── @Tool: executeCode(code, language, input)             │
-│  ├── Submits to CodeExecutionService                        │
-│  ├── Polls for results (20 min timeout)                     │
-│  └── Returns truncated output (1MB limit)                   │
+│  └── Submits to CodeExecutionService, polls, returns output │
 │                                                              │
 │  LLMConfig (@Configuration)                                 │
-│  ├── Creates ChatModel Spring Bean                          │
-│  ├── Model: gemini-2.5-flash                                │
-│  └── API Key from environment variable                      │
-│                                                              │
+│  └── Creates ChatModel bean (gemini-2.5-flash)             │
 └─────────────────────────────────────────────────────────────┘
                            ↓
                   CodeExecutionService
-                  (Shared execution queue)
 ```
-
-**How Tool Invocation Works**:
-1. User asks: "Why doesn't this code work?"
-2. Agent analyzes code context and error messages
-3. Agent decides to test a fix hypothesis
-4. Agent invokes `CodeExecutionTools.executeCode("fixed_code", "Java", "test_input")`
-5. Tool submits to execution queue, polls for completion
-6. Tool returns results: `"Compilation error on line 5: missing semicolon"`
-7. Agent incorporates results into response: "The issue is a missing semicolon. Here's the corrected version..."
 
 ### Old vs. New Architecture Comparison
 
@@ -276,103 +228,65 @@ Background: @Scheduled cleanup every 30s removes old executions
 ### Key Components
 
 #### Frontend (`cr-frontend/src/`)
-- `App.jsx` - Main application with split-pane layout, state management, and polling logic
-- `components/CodeEditor.jsx` - Code editor with overlay for syntax highlighting
-- `components/Terminal.jsx` - Output display with execution animations
-- `components/ChatInterface.jsx` - AI chat interface with markdown rendering
-- `components/SyntaxHighlighter.jsx` - Language-specific syntax highlighting
-- `components/Alert.jsx` - Success/error notification system
-- `components/ExecutingAnimation.jsx` - Visual feedback during code execution
+- `App.jsx` - Main app with polling logic
+- `components/CodeEditor.jsx`, `Terminal.jsx`, `ChatInterface.jsx` - UI components
+- `components/SyntaxHighlighter.jsx` - Regex-based highlighting
 
 #### Backend (`src/main/java/com/cr/coderunner/`)
-- `controller/IDEController.java` - REST API endpoints for code execution (`/submit`, `/check`, `/check_queue`)
-- `controller/LLMController.java` - REST API endpoints for AI chat (`/llm/message`)
-- `controller/HealthController.java` - Health check endpoints
-- `model/CodeSubmission.java` - Core execution engine with Docker integration
-- `model/CodeExecution.java` - Thread wrapper for async execution in queue
-- `service/CodeExecutionService.java` - **Execution queue manager with 10-worker thread pool**
-- `service/CodeExecutionTools.java` - **LangChain4j @Tool methods for agent code testing**
-- `service/CodeHelperAssistant.java` - **LangChain4j @AiService agent interface**
-- `service/LLMConfig.java` - **Spring Bean configuration for Gemini ChatModel**
-- `service/UserData.java` - In-memory submission storage (legacy, for template retrieval)
-- `service/GeminiService.java` - Delegates to CodeHelperAssistant agent
-- `service/WebConfig.java` - CORS configuration
-- `dto/UserChat.java` - Data transfer object for chat messages with code context
-- `dto/RunResult.java` - Execution result with status (RUNNING/FINISHED/NONEXISTENT)
+- `controller/IDEController.java` - `/submit`, `/check` endpoints
+- `controller/LLMController.java` - `/llm/message` endpoint
+- `model/CodeSubmission.java` - Docker execution engine
+- `service/CodeExecutionService.java` - **10-worker thread pool queue manager**
+- `service/CodeHelperAssistant.java` - **@AiService LangChain4j agent**
+- `service/CodeExecutionTools.java` - **@Tool methods for agent**
+- `service/LLMConfig.java` - ChatModel bean config
 
 ## Prerequisites
 
-- **Docker** - Required for all language execution (C, Python, Java)
-- **Java 21+** - Backend runtime
-- **Node.js** (v18+) - Frontend development
-- **Maven** - Backend build tool
-- **Google Gemini API Key** - For AI code assistant features
+- **Docker**, **Java 21+**, **Node.js v18+**, **Maven**
+- **Google Gemini API Key** for AI assistant
 
 ## Installation
 
-### 1. Clone the Repository
+### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/CodeRunner.git
-cd CodeRunner
+git clone https://github.com/yourusername/CodeRunner.git && cd CodeRunner
 ```
 
 ### 2. Backend Setup
 ```bash
-# Set up environment variables
-# Option 1: Add to application.properties
+# Set gemini.api.key in application.properties or export GEMINI_API_KEY
 echo "gemini.api.key=your_api_key_here" >> src/main/resources/application.properties
-
-# Option 2: Set as environment variable (for production)
-export GEMINI_API_KEY=your_api_key_here
-
-# Build the backend
-mvn clean install
-
-# Run Spring Boot server (starts on http://localhost:8080)
-mvn spring-boot:run
+mvn clean install && mvn spring-boot:run
 ```
 
 ### 3. Frontend Setup
 ```bash
-# Navigate to frontend directory
 cd cr-frontend
-
-# Install dependencies
 npm install
-
-# Create .env file for API URL
 echo "VITE_API_URL=http://localhost:8080" > .env
-
-# Start development server (starts on http://localhost:5173)
 npm run dev
 ```
 
 ### 4. Docker Setup
-Ensure Docker is running and the necessary images are available:
 ```bash
-docker pull alpine:latest
-docker pull python:3.12-alpine
-docker pull eclipse-temurin:21-alpine
+docker pull alpine:latest python:3.12-alpine eclipse-temurin:21-alpine
 ```
 
 ## Usage
 
 ### Running Code
-1. Open your browser to `http://localhost:5173`
-2. Select a programming language from the dropdown
-3. Write your code in the editor (or use the provided template)
-4. (Optional) Switch to Input tab and provide stdin input
-5. Click "RUN" to execute
-6. View output, errors, and execution time in the output panel
-7. Click "STOP" to terminate execution if needed
+1. Open `http://localhost:5173`, select language
+2. Write code (or load template), optionally add stdin input
+3. Click "RUN" → polls for results → view output/errors
+4. Click "STOP" to terminate if needed
 
 ### Using Code_Helper
-1. Switch to the "CODE_HELPER" tab in the lower right panel
-2. Type your question or describe the issue you're facing
-3. Click send or press Enter to submit your message
-4. Receive AI-powered assistance based on your code context
-5. Continue the conversation to refine solutions
-6. Chat history persists when switching between Input and Code_Helper tabs
+1. Switch to "CODE_HELPER" tab
+2. Ask questions about your code
+3. Agent analyzes context, may autonomously test code via tools
+4. Receive debugging suggestions with markdown formatting
+5. Chat history persists across tab switches
 
 ## API Endpoints
 
@@ -401,62 +315,26 @@ docker pull eclipse-temurin:21-alpine
 
 ### Example Request
 ```bash
-# Submit code for execution
-curl -X POST http://localhost:8080/submit \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "print(\"Hello World\")",
-    "language": "Python",
-    "problem": "test",
-    "input": ""
-  }'
+# Submit code → returns UUID
+curl -X POST http://localhost:8080/submit -H "Content-Type: application/json" \
+  -d '{"code": "print(\"Hello\")", "language": "Python", "problem": "test", "input": ""}'
 
-# Response: UUID string
-# "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-
-# Check execution status
-curl -X POST http://localhost:8080/check \
-  -H "Content-Type: application/json" \
+# Check status → returns RunResult
+curl -X POST http://localhost:8080/check -H "Content-Type: application/json" \
   -d '"a1b2c3d4-e5f6-7890-abcd-ef1234567890"'
 
-# Response when FINISHED:
-{
-  "success": true,
-  "runtime": 0.123,
-  "output": "Hello World\n",
-  "error": "",
-  "exitStatus": "",
-  "status": "FINISHED"
-}
+# Response: {"success": true, "runtime": 0.123, "output": "Hello\n", "status": "FINISHED"}
 
-# Ask AI for help (agent may invoke tools autonomously)
-curl -X POST http://localhost:8080/llm/message \
-  -H "Content-Type: application/json" \
+# Ask AI (agent may autonomously test code)
+curl -X POST http://localhost:8080/llm/message -H "Content-Type: application/json" \
   -d '{
-    "messages": [
-      {"role": "system", "content": "You are Code_Helper..."},
-      {"role": "user", "content": "Why is my code not working?"}
-    ],
-    "code": {
-      "code": "print(x)",
-      "language": "Python",
-      "input": "",
-      "problem": "test"
-    },
-    "result": {
-      "success": false,
-      "output": "",
-      "error": "NameError: name 'x' is not defined"
-    }
+    "messages": [{"role": "user", "content": "Why is my code not working?"}],
+    "code": {"code": "print(x)", "language": "Python"},
+    "result": {"success": false, "error": "NameError: name '\''x'\'' is not defined"}
   }'
 
-# Response: Agent analyzes error, may test fix via CodeExecutionTools
-# Agent internally calls: executeCode("x = 'Hello'\nprint(x)", "Python", "")
-# Returns: "The error occurs because variable 'x' is undefined. Here's the corrected version..."
-
-# Check execution queue status
+# Check queue
 curl http://localhost:8080/check_queue
-# Response: List of active execution UUIDs with status
 ```
 
 ## Project Structure
@@ -513,214 +391,116 @@ CodeRunner/
 
 ### Running Tests
 ```bash
-# Backend tests
-mvn test
-
-# Frontend linting
-cd cr-frontend && npm run lint
+mvn test                           # Backend
+cd cr-frontend && npm run lint     # Frontend
 ```
 
 ### Building for Production
-
-#### Backend
 ```bash
-mvn clean package
-java -jar target/CodeRunner-0.0.1-SNAPSHOT.jar
-```
+# Backend
+mvn clean package && java -jar target/CodeRunner-0.0.1-SNAPSHOT.jar
 
-#### Frontend
-```bash
-cd cr-frontend
-npm run build
-# Built files will be in dist/
-```
+# Frontend
+cd cr-frontend && npm run build    # outputs to dist/
 
-#### Docker
-```bash
-# Build image
+# Docker
 docker build -t coderunner .
-
-# Run with Docker-in-Docker support
 docker run --privileged --cgroupns=host -p 8080:8080 \
-  -e gemini.api.key=your_api_key_here \
-  coderunner
+  -e gemini.api.key=your_api_key_here coderunner
 ```
 
 ## Roadmap
 
 ### Recently Completed
-- [x] AI-powered code assistant with context awareness
-- [x] Multi-turn chat conversations
-- [x] Markdown rendering in AI responses
-- [x] Persistent chat history across UI navigation
-- [x] **LangChain4j agent framework** with @AiService and @Tool integration
-- [x] **Agent autonomous code testing** via tool invocation
-- [x] **Asynchronous execution queue** with 10-worker thread pool
-- [x] **UUID-based polling** for non-blocking code execution
-- [x] **Scheduled cleanup** of stale executions
+- [x] LangChain4j agent framework with @AiService and @Tool
+- [x] Agent autonomous code testing via tool invocation
+- [x] Asynchronous execution queue (10-worker thread pool)
+- [x] UUID-based polling for non-blocking execution
+- [x] Scheduled cleanup of stale executions
 
 ### Planned Features
-- [ ] Add C++ language support (execution engine ready)
-- [ ] JavaScript/TypeScript language support
-- [ ] Migrate from in-memory storage to SQL database
-- [ ] Implement user authentication and sessions
-- [ ] Add problem/challenge system (ProblemController)
-- [ ] Syntax error highlighting in editor (inline diagnostics)
-- [ ] Code sharing functionality with shareable links
-- [ ] Execution history and saved code snippets
-- [ ] Custom compilation flags and runtime arguments
-- [ ] Support for additional languages (Go, Rust, Ruby)
-- [ ] Code formatting and linting integration
-- [ ] Multi-file project support
-- [ ] Collaborative editing features
-- [ ] Performance profiling and memory usage tracking
+- [ ] C++/JavaScript/TypeScript language support
+- [ ] SQL database migration (currently in-memory)
+- [ ] User authentication and session management
+- [ ] Problem/challenge system
+- [ ] Code sharing with shareable links
 
 ## Technical Details
 
 ### Execution Safety
-- **Timeouts**: 60-second hard limit on execution time per submission
-- **Output Limits**: 1MB backend limit, 500KB frontend limit to prevent memory overflow
-- **Containerization**: Isolated Docker containers for all language execution
-- **Resource Limits**: Docker resource constraints (commented in code, ready to enable)
-- **Multi-threading**: Separate threads for stdout/stderr to prevent deadlocks
-- **Cleanup**: Automatic removal of temporary files and Docker containers
-- **Error Handling**: Graceful handling of container failures and timeouts
-- **Queue Overflow**: Thread pool queue can handle bursts; blocks if all 10 workers busy
-- **Stale Execution Cleanup**: Scheduled task removes executions older than 60 seconds
+- 60-second timeout, 1MB output limit (backend), 500KB (frontend)
+- Docker containerization for isolated execution
+- Multi-threaded stdout/stderr readers prevent deadlocks
+- Automatic cleanup of temp files and containers
+- Scheduled task removes stale executions (60s old, runs every 30s)
 
 ### Agent Safety & Constraints
 
-The CodeHelper agent is designed with specific constraints to ensure safe and appropriate usage:
+- **Read-Only Design**: Agent suggests fixes, user manually applies (no direct code modification)
+- **Sparing Tool Use**: System prompt limits autonomous testing frequency
+- **Output Limits**: 1MB backend, 1000 chars for LLM context (prevents token overflow)
+- **Pattern**: Agent analyzes → tests hypothesis via tool → suggests verified fix
 
-**Design Principles**:
-- **Read-Only**: Agent **cannot** modify user code directly in the editor
-- **Suggestive**: Agent provides corrected code that users must manually copy/paste
-- **Sparing Tool Use**: System prompt instructs agent to use code execution "sparingly"
-- **No Code Modification**: Agent is a debugging assistant, not a code writer
-- **Token Awareness**: Tool outputs truncated to prevent context overflow
-
-**Why Read-Only?**:
-This design decision prevents several issues:
-1. Avoids overwriting user work without explicit consent
-2. Keeps user in control of their code
-3. Forces user to understand changes before applying them
-4. Prevents accidental code corruption from agent errors
-5. Maintains clear separation between user actions and agent suggestions
-
-**Tool Output Limits**:
-- Backend: 1MB max output per execution
-- LLM Context: 1000 characters max (via `displayStrShorter()`)
-- Prevents: Token limit exceeded errors, excessive API costs, context window overflow
-
-**Agent Tool Usage Pattern**:
 ```
-Agent analyzes → Identifies potential fix → Tests hypothesis via tool →
-Verifies fix works → Suggests corrected code to user
+Agent analyzes → Tests via tool → Verifies fix → Suggests to user
 ```
 
 ### Docker Execution Details
-All languages now use Docker for consistent, isolated execution:
 
 ```bash
-# Python execution
-docker run --name <uuid> --rm -v /host/path:/sandbox \
-  python:3.12-alpine sh -c \
-  "python3 sandbox/code.py < sandbox/input.txt"
+# Python
+docker run --name <uuid> --rm -v /host:/sandbox python:3.12-alpine \
+  sh -c "python3 sandbox/code.py < sandbox/input.txt"
 
-# C execution
-docker run --name <uuid> --rm -v /host/path:/sandbox \
-  alpine:latest sh -c \
-  "apk add --no-cache gcc musl-dev && \
-   gcc sandbox/code.c -o sandbox/main && \
-   ./sandbox/main < sandbox/input.txt"
+# C
+docker run --name <uuid> --rm -v /host:/sandbox alpine:latest \
+  sh -c "apk add gcc musl-dev && gcc sandbox/code.c -o sandbox/main && ./sandbox/main"
 
-# Java execution
-docker run --name <uuid> --rm -v /host/path:/sandbox \
-  eclipse-temurin:21-alpine sh -c \
-  "java sandbox/code.java < sandbox/input.txt"
+# Java
+docker run --name <uuid> --rm -v /host:/sandbox eclipse-temurin:21-alpine \
+  sh -c "java sandbox/code.java < sandbox/input.txt"
 ```
 
 ### Execution Queue Architecture
 
-**CodeExecutionService** manages concurrent code executions using a fixed thread pool:
-
 ```java
-// 10-worker thread pool for parallel executions
+// 10-worker thread pool
 private final ExecutorService executor = Executors.newFixedThreadPool(10);
-
-// Thread-safe result tracking
 private final ConcurrentHashMap<String, CodeExecution> results;
 
-// Submit execution (non-blocking)
 String uuid = executionService.execute(new CodeExecution(submission));
-
-// Poll for results
 RunResult result = executionService.checkExecution(uuid);
 // Status: "RUNNING" | "FINISHED" | "NONEXISTENT"
 ```
 
-**Lifecycle**:
-1. **Submit**: `execute()` generates UUID, submits `CodeExecution` thread to pool, returns UUID
-2. **Execute**: Worker thread runs `CodeExecution.run()` → `CodeSubmission.run()` → Docker execution
-3. **Track**: Execution stored in `ConcurrentHashMap` with UUID key
-4. **Poll**: Frontend calls `checkExecution(uuid)` every 500ms
-5. **Complete**: When done, execution marked with `done=true` and `completedAt` timestamp
-6. **Cleanup**: Results removed from map on first retrieval (FINISHED status) or by scheduled cleanup (60+ seconds old)
+**Lifecycle**: Submit (UUID) → Worker executes → Store in HashMap → Poll → Cleanup
 
-**Scheduled Cleanup**:
 ```java
-@Scheduled(fixedRate = 30_000) // Every 30 seconds
+@Scheduled(fixedRate = 30_000) // Cleanup every 30s
 public void cleanExecutions() {
     // Removes executions older than 60 seconds
-    // Prevents memory leaks from abandoned/forgotten submissions
 }
 ```
 
 ### AI Integration (LangChain4j Agent Framework)
 
-CodeRunner uses **LangChain4j Spring Boot Starter** for intelligent agent-based code assistance:
-
-**Architecture**:
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ LangChain4j Spring Boot Auto-Configuration              │
 ├──────────────────────────────────────────────────────────┤
-│                                                           │
 │  @AiService Interface (CodeHelperAssistant)              │
-│  • Interface-based agent definition                      │
-│  • @SystemMessage defines agent role/behavior            │
-│  • chat(List<ChatMessage>) method signature              │
-│  • Auto-implemented by LangChain4j at runtime            │
+│  • Interface with @SystemMessage + chat() method         │
+│  • Auto-implemented by LangChain4j                       │
 │                                                           │
 │  @Tool Methods (CodeExecutionTools)                      │
-│  • @Component class with @Tool annotated methods         │
 │  • executeCode(code, language, input) → String           │
-│  • Auto-discovered and wired to agent                    │
-│  • Agent can invoke tools autonomously during reasoning  │
+│  • Agent invokes autonomously during reasoning           │
 │                                                           │
 │  ChatModel Bean (LLMConfig)                              │
-│  • Spring @Bean creates GoogleAiGeminiChatModel          │
-│  • Model: gemini-2.5-flash (fast, cost-effective)       │
+│  • GoogleAiGeminiChatModel (gemini-2.5-flash)           │
 │  • Auto-injected into agent                              │
-│                                                           │
 └──────────────────────────────────────────────────────────┘
 ```
-
-**Key Features**:
-- **@AiService**: Interface-based agent definition with system prompt
-- **@Tool**: Methods the agent can invoke autonomously (e.g., code execution)
-- **Context Awareness**: Agent receives full chat history + code + execution results
-- **Tool Invocation**: Agent decides when to test code to verify fixes
-- **Output Limits**: Tool results truncated to 1MB (backend) / 1000 chars (LLM context)
-- **Spring Integration**: Seamless dependency injection and auto-configuration
-
-**Tool Usage Pattern**:
-1. User: "Why is my code crashing?"
-2. Agent analyzes code + error message from context
-3. Agent invokes tool: `executeCode(modified_code, "Java", "test_input")`
-4. Tool submits to execution queue, polls for results
-5. Tool returns: "Output: Hello World\nSuccess: true"
-6. Agent: "Your code had a NullPointerException on line 10. I tested a fix and it works. Copy this corrected version..."
 
 **Dependencies**:
 ```xml
@@ -749,54 +529,27 @@ CodeRunner uses **LangChain4j Spring Boot Starter** for intelligent agent-based 
 
 ### Environment Variables
 
-#### Backend (application.properties or .env)
 ```bash
-# Required for LangChain4j agent functionality
+# Backend (application.properties)
 gemini.api.key=your_gemini_api_key_here
-```
 
-Note: The property `gemini.api.key` is injected via `@Value("${gemini.api.key}")` in `LLMConfig.java`
-
-#### Frontend (cr-frontend/.env)
-```bash
+# Frontend (cr-frontend/.env)
 VITE_API_URL=http://localhost:8080
 ```
 
-### CORS Configuration
-By default, the backend allows requests from:
-- `http://localhost:5173` (Vite dev server)
-- Configurable in `WebConfig.java`
+**CORS**: Allows `http://localhost:5173` (configured in `WebConfig.java`)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Fork → Create branch → Commit → Push → Open PR
 
 ## Known Issues & TODOs
 
-### Agent & LLM
-- Fine-tune agent system prompt for optimal tool usage frequency
-- Add token usage tracking and cost monitoring for Gemini API calls
-- Implement conversation memory pruning for long chat sessions
-- Add more specialized tools for agent (e.g., code linting, syntax checking)
-
-### Execution Infrastructure
-- Optimize Docker image pulling and caching
-- Add rate limiting for API endpoints
-- Improve error messages for Docker failures
-- Add unit tests for CodeSubmission execution logic
-- Implement execution priority queue for premium users
-
-### General
-- Remove debug print statements (e.g., "We got here bro" in CodeSubmission.java)
-- Migrate UserData from in-memory to SQL database
-- Implement proper session management for chat history persistence across sessions
-- Add user authentication and authorization
+- Fine-tune agent prompt and add token usage tracking
+- Optimize Docker image caching and add rate limiting
+- Remove debug print statements
+- Migrate to SQL database
+- Add user authentication
 
 ## License
 
@@ -804,13 +557,8 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Acknowledgments
 
-- Built with Spring Boot and React
-- Uses Docker for safe code execution
-- Powered by Google Gemini AI
-- LangChain4j for LLM integration
-- Inspired by online code editors like LeetCode and HackerRank
-- React-markdown for rich text rendering
+Built with **Spring Boot**, **React**, **Docker**, **Google Gemini AI**, and **LangChain4j**. Inspired by LeetCode and HackerRank.
 
 ---
 
-**Note**: This project is under active development. The AI code assistant uses **LangChain4j agent framework** with autonomous code testing capabilities and requires a **Google Gemini API key** for full functionality. The backend uses an **asynchronous execution queue model** with 10-worker thread pool for handling concurrent code executions. Some features may be incomplete or subject to change.
+**Note**: Active development. AI assistant requires **Gemini API key**. Backend uses **async execution queue** (10-worker thread pool) and **LangChain4j agent framework** with autonomous code testing.
